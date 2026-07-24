@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>WMT × WeGolden — Expense Dashboard</title>
+<style>
+:root{
+  color-scheme: light;
+  --page:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --muted:#898781;
+  --grid:#e1e0d9; --axis:#c3c2b7; --ring:rgba(11,11,11,.10);
+  --in:#2a78d6; --out:#eb6834; --s3:#1baf7a;
+  --o-dubai:#2a78d6; --o-alex:#eb6834; --o-wg:#1baf7a;
+  --good:#006300; --bad:#d03b3b;
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --page:#0d0d0d; --surface:#1a1a19; --ink:#ffffff; --ink2:#c3c2b7; --muted:#898781;
+  --grid:#2c2c2a; --axis:#383835; --ring:rgba(255,255,255,.10);
+  --in:#3987e5; --out:#d95926; --s3:#199e70;
+  --o-dubai:#3987e5; --o-alex:#d95926; --o-wg:#199e70;
+  --good:#0ca30c; --bad:#e66767;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --page:#0d0d0d; --surface:#1a1a19; --ink:#ffffff; --ink2:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --axis:#383835; --ring:rgba(255,255,255,.10);
+    --in:#3987e5; --out:#d95926; --s3:#199e70;
+    --o-dubai:#3987e5; --o-alex:#d95926; --o-wg:#199e70;
+    --good:#0ca30c; --bad:#e66767;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);
+  font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 20px 48px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin:6px 0 16px}
+h1{font-size:20px;margin:0;font-weight:650}
+.sub{color:var(--muted);font-size:12.5px}
+.spacer{flex:1}
+button.ghost{background:none;border:1px solid var(--ring);border-radius:8px;color:var(--ink2);
+  padding:5px 10px;cursor:pointer;font:inherit;font-size:12.5px}
+button.ghost:hover{border-color:var(--muted)}
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:16px}
+.chip{border:1px solid var(--ring);border-radius:999px;padding:5px 12px;cursor:pointer;
+  background:var(--surface);color:var(--ink2);font:inherit;font-size:12.5px;display:flex;gap:7px;align-items:center}
+.chip .dot{width:9px;height:9px;border-radius:50%}
+.chip.on{border-color:var(--ink2);color:var(--ink);font-weight:600}
+select,input[type=search]{background:var(--surface);border:1px solid var(--ring);border-radius:8px;
+  color:var(--ink);padding:6px 10px;font:inherit;font-size:12.5px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px}
+.kpi{background:var(--surface);border:1px solid var(--ring);border-radius:12px;padding:14px 16px}
+.kpi .lbl{font-size:12px;color:var(--muted);margin-bottom:4px}
+.kpi .val{font-size:26px;font-weight:650;letter-spacing:-.01em}
+.kpi .sub2{font-size:12px;color:var(--ink2);margin-top:3px}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.card{background:var(--surface);border:1px solid var(--ring);border-radius:12px;padding:16px;min-width:0}
+.card.full{grid-column:1/-1}
+.card h2{font-size:13.5px;margin:0 0 2px;font-weight:650}
+.card .note{font-size:11.5px;color:var(--muted);margin-bottom:10px}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--ink2);margin:2px 0 8px;flex-wrap:wrap}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+svg text{font:11px system-ui,-apple-system,"Segoe UI",sans-serif;fill:var(--muted)}
+svg .dl{fill:var(--ink2);font-weight:600;font-variant-numeric:tabular-nums}
+svg .gl{stroke:var(--grid);stroke-width:1}
+svg .bl{stroke:var(--axis);stroke-width:1}
+.tip{position:fixed;pointer-events:none;background:var(--surface);border:1px solid var(--ring);
+  border-radius:8px;padding:8px 10px;font-size:12px;color:var(--ink);box-shadow:0 4px 16px rgba(0,0,0,.18);
+  z-index:50;display:none;max-width:280px}
+.tip b{font-variant-numeric:tabular-nums}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{color:var(--muted);text-align:left;font-weight:600;padding:7px 8px;border-bottom:1px solid var(--axis);
+  cursor:default;white-space:nowrap}
+td{padding:6px 8px;border-bottom:1px solid var(--grid);vertical-align:top}
+td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td .pill{font-size:10.5px;border:1px solid var(--ring);border-radius:999px;padding:1px 7px;color:var(--ink2);white-space:nowrap}
+.pos{color:var(--good)} .neg{color:var(--ink)}
+.more{margin-top:10px;text-align:center}
+.pswitch{display:flex;gap:8px;margin:0 0 14px}
+.pbtn{border:1px solid var(--ring);border-radius:10px;background:var(--surface);color:var(--ink2);
+  padding:8px 18px;cursor:pointer;font:inherit;font-size:13.5px;font-weight:600}
+.pbtn.on{background:var(--in);border-color:var(--in);color:#fff}
+.tabs{display:flex;gap:4px;margin:0 0 16px;border-bottom:1px solid var(--axis);flex-wrap:wrap}
+.tab{background:none;border:none;border-bottom:2px solid transparent;padding:8px 14px;cursor:pointer;
+  font:inherit;font-size:13.5px;color:var(--ink2)}
+.tab.on{color:var(--ink);font-weight:650;border-bottom-color:var(--in)}
+.view{display:none}.view.on{display:block}
+.kpis .pend{color:var(--muted);font-size:20px}
+tr.tot td{font-weight:650;border-top:2px solid var(--axis)}
+footer{margin-top:22px;font-size:11.5px;color:var(--muted);line-height:1.6}
+@media(max-width:760px){.cards{grid-template-columns:1fr}.kpi .val{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+<header>
+  <h1>MENA Expense Dashboard</h1>
+  <span class="sub">WeMasterTrade × WeGolden · Data as of <b>__ASOF__</b></span>
+  <span class="spacer"></span>
+  <button class="ghost" id="themeBtn" onclick="toggleTheme()">◐ Theme</button>
+</header>
+
+<div class="pswitch">
+  <button class="pbtn on" data-product="wmt" onclick="setProduct('wmt')">WeMasterTrade</button>
+  <button class="pbtn" data-product="wg" onclick="setProduct('wg')">WeGolden</button>
+</div>
+
+<div class="tabs">
+  <button class="tab on" data-tab="exp" onclick="setTab('exp')">Expenses</button>
+  <button class="tab" data-tab="rev" onclick="setTab('rev')">MENA Revenue</button>
+  <button class="tab" data-tab="prof" onclick="setTab('prof')">Operation Profit</button>
+</div>
+
+<div class="filters">
+  <button class="chip on" data-office="Dubai"><span class="dot" style="background:var(--o-dubai)"></span>Dubai (WMT)</button>
+  <button class="chip on" data-office="WMT Alexandria"><span class="dot" style="background:var(--o-alex)"></span>Alexandria (WMT)</button>
+  <button class="chip on" data-office="WeGolden Egypt"><span class="dot" style="background:var(--o-wg)"></span>WeGolden Egypt</button>
+  <select id="range">
+    <option value="all">All time</option>
+    <option value="ytd">2026 YTD</option>
+    <option value="3m">Last 3 months</option>
+    <option value="6m">Last 6 months</option>
+    <optgroup label="Single month" id="monthOpts"></optgroup>
+  </select>
+</div>
+
+<div class="view on" id="view-exp">
+<div class="kpis">
+  <div class="kpi"><div class="lbl">Money in</div><div class="val" id="kIn">–</div><div class="sub2" id="kInSub"></div></div>
+  <div class="kpi"><div class="lbl">Money out</div><div class="val" id="kOut">–</div><div class="sub2" id="kOutSub"></div></div>
+  <div class="kpi"><div class="lbl">Net</div><div class="val" id="kNet">–</div><div class="sub2" id="kNetSub"></div></div>
+  <div class="kpi"><div class="lbl">Transactions</div><div class="val" id="kN">–</div><div class="sub2" id="kNSub"></div></div>
+</div>
+
+<div class="cards">
+  <div class="card full">
+    <h2>Monthly money in vs out (USD)</h2>
+    <div class="note">All amounts converted to USD — FX assumptions in the footer. Internal transfers excluded.</div>
+    <div class="legend"><span><i style="background:var(--in)"></i>Money in</span><span><i style="background:var(--out)"></i>Money out</span></div>
+    <div id="chMonthly"></div>
+  </div>
+  <div class="card">
+    <h2>Spending by category (USD)</h2>
+    <div class="note">Top 10 categories in the selected period</div>
+    <div id="chCat"></div>
+  </div>
+  <div class="card">
+    <h2>Spending by office (USD)</h2>
+    <div class="note">Money out per office in the selected period</div>
+    <div id="chOffice"></div>
+  </div>
+  <div class="card full">
+    <h2>Transactions</h2>
+    <div class="note" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <input type="search" id="q" placeholder="Search description, category, notes…" style="min-width:240px">
+      <span id="tblCount"></span>
+    </div>
+    <div style="overflow-x:auto">
+    <table>
+      <thead><tr><th>Date</th><th>Office</th><th>Category</th><th>Description</th><th style="text-align:right">Amount (native)</th><th style="text-align:right">USD</th></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    </div>
+    <div class="more"><button class="ghost" id="moreBtn" onclick="showMore()">Show more</button></div>
+  </div>
+</div>
+</div><!-- /view-exp -->
+
+<div class="view" id="view-rev">
+<div class="kpis">
+  <div class="kpi"><div class="lbl">Revenue</div><div class="val" id="rTot">–</div><div class="sub2" id="rTotSub"></div></div>
+  <div class="kpi"><div class="lbl">Deals won</div><div class="val" id="rN">–</div><div class="sub2">closed-won deals</div></div>
+  <div class="kpi"><div class="lbl">Avg deal size</div><div class="val" id="rAvg">–</div><div class="sub2">revenue ÷ deals</div></div>
+  <div class="kpi"><div class="lbl">Best month</div><div class="val" id="rBest">–</div><div class="sub2" id="rBestSub"></div></div>
+</div>
+<div class="cards">
+  <div class="card full">
+    <h2>Monthly revenue — WMT MENA (USD)</h2>
+    <div class="note">Closed-won deal amounts by create date · source: HubSpot report "Total MENA Revenue"</div>
+    <div id="chRevMonthly"></div>
+  </div>
+  <div class="card">
+    <h2>Revenue by country (USD)</h2>
+    <div class="note">Selected period</div>
+    <div id="chRevCountry"></div>
+  </div>
+  <div class="card">
+    <h2>Deals by country</h2>
+    <div class="note">Number of closed-won deals · selected period</div>
+    <div id="chRevDeals"></div>
+  </div>
+</div>
+</div><!-- /view-rev -->
+
+<div class="view" id="view-prof">
+<div class="kpis">
+  <div class="kpi"><div class="lbl">Revenue</div><div class="val" id="pRev">–</div><div class="sub2" id="pRevSub">WMT MENA (HubSpot report)</div></div>
+  <div class="kpi" id="pPayCard"><div class="lbl">Customer payouts</div><div class="val" id="pPay">–</div><div class="sub2" id="pPaySub">trader + partner (IP)</div></div>
+  <div class="kpi"><div class="lbl">Costs</div><div class="val" id="pCost">–</div><div class="sub2" id="pCostSub">office expenses</div></div>
+  <div class="kpi"><div class="lbl">Operation profit</div><div class="val" id="pNet">–</div><div class="sub2" id="pNetSub"></div></div>
+</div>
+<div class="cards">
+  <div class="card full">
+    <h2 id="chProfTitle">Revenue vs payouts &amp; costs by month (USD)</h2>
+    <div class="note" id="chProfNote">Operation profit = revenue − payouts − costs. Right bar stacks payouts and costs.</div>
+    <div class="legend"><span><i style="background:var(--in)"></i>Revenue</span><span id="legPay"><i style="background:var(--out)"></i>Payouts</span><span><i style="background:var(--s3)"></i>Costs</span></div>
+    <div id="chProf"></div>
+  </div>
+  <div class="card" id="cardPayCountry">
+    <h2>Payouts by country (USD)</h2>
+    <div class="note">Trader + partner payouts · selected period</div>
+    <div id="chPayCountry"></div>
+  </div>
+  <div class="card" id="cardPaySplit">
+    <h2>Trader vs partner payouts (USD)</h2>
+    <div class="note">Monthly split · selected period</div>
+    <div class="legend"><span><i style="background:var(--out)"></i>Trader</span><span><i style="background:var(--s3)"></i>Partner (IP)</span></div>
+    <div id="chPaySplit"></div>
+  </div>
+  <div class="card full">
+    <h2>Monthly P&amp;L (USD)</h2>
+    <div class="note"></div>
+    <div style="overflow-x:auto">
+    <table>
+      <thead><tr><th>Month</th><th style="text-align:right">Revenue</th><th style="text-align:right">Payouts</th><th style="text-align:right">Costs</th><th style="text-align:right">Operation Profit</th><th style="text-align:right">Margin</th></tr></thead>
+      <tbody id="pTbody"></tbody>
+    </table>
+    </div>
+  </div>
+</div>
+</div><!-- /view-prof -->
+
+<footer>
+  <b>Products:</b> WeMasterTrade figures cover the Dubai + Alexandria offices and WMT MENA revenue/payouts only — WeGolden money is fully excluded. The WeGolden section has its own expenses and operation profit (no revenue yet — build phase).
+  <br><b>Revenue source:</b> HubSpot custom report "Total MENA Revenue" (unsummarized export, closed-won WMT deals by create date) — 15 MENA countries, USD.
+  <br><b>Payout sources:</b> HubSpot reports "MENA Trader Payout" and "MENA IP Payout" (approval amount to withdraw, by ticket create date, USD). Operation profit = revenue − payouts − costs.
+  $9,166 of payouts dated before Aug 2025 fall outside the dashboard period and are excluded; one Aug '25 Iraq trader ticket has no amount in HubSpot and is skipped.
+  <br><b>FX assumptions:</b> 1 USD = 3.6725 AED (peg) · Alexandria EGP at actual transfer rate 52.93 EGP/USD · WeGolden EGP at 45.11 EGP/USD (per report).
+  <br><b>Method:</b> "Money in" = income + funding transfers received; "Money out" = expenses. Internal transfers between own accounts are excluded from totals and charts (still visible in the source files).
+  WeGolden setup costs (undated items) are assigned to Feb 2026.
+  <br>Source files: Expense report Dubai office.xlsx · Expense Report – WMT Alexandria Office.xlsx · WeGolden Egypt Expense report.xlsx
+</footer>
+</div>
+
+<div class="tip" id="tip"></div>
+
+<script>
+const DATA = __DATA__;
+const REV = __REV__;
+const PAY = __PAY__;
+const ASOF = "__ASOF__";
+const RATES = { AED: 3.6725, EGP_ALEX: 52.93, EGP_WG: 45.11 };
+window.addEventListener('DOMContentLoaded',render);
+
+/* ---------- theme ---------- */
+function toggleTheme(){
+  const r=document.documentElement;
+  const dark = r.dataset.theme ? r.dataset.theme==='dark'
+    : matchMedia('(prefers-color-scheme: dark)').matches;
+  r.dataset.theme = dark ? 'light' : 'dark';
+  render();
+}
+
+/* ---------- helpers ---------- */
+function usd(t){
+  if(t.cur==='AED') return t.amt/RATES.AED;
+  if(t.cur==='EGP') return t.amt/(t.office==='WMT Alexandria'?RATES.EGP_ALEX:RATES.EGP_WG);
+  return t.amt;
+}
+const fmt$ = v => (v<0?'−$':'$')+Math.abs(v).toLocaleString('en-US',{maximumFractionDigits:0});
+const fmtK = v => { const a=Math.abs(v);
+  return (v<0?'−$':'$')+(a>=1e6?(a/1e6).toFixed(1)+'M':a>=1e3?Math.round(a/1e3)+'k':Math.round(a)); };
+const fmtNat = t => t.amt.toLocaleString('en-US',{maximumFractionDigits:2})+' '+t.cur;
+const monLbl = mk => { const [y,m]=mk.split('-');
+  return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m-1]+" '"+y.slice(2); };
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const OFF_COLOR = {'Dubai':'--o-dubai','WMT Alexandria':'--o-alex','WeGolden Egypt':'--o-wg'};
+const OFF_SHORT = {'Dubai':'Dubai','WMT Alexandria':'Alexandria','WeGolden Egypt':'WeGolden'};
+
+/* ---------- state & filtering ---------- */
+const PRODUCT_OFFICES = { wmt:['Dubai','WMT Alexandria'], wg:['WeGolden Egypt'] };
+const state = { product:'wmt', offices:new Set(PRODUCT_OFFICES.wmt), range:'all', q:'', rows:50, tab:'exp' };
+function setProduct(p){
+  state.product=p; state.offices=new Set(PRODUCT_OFFICES[p]); state.rows=50;
+  document.querySelectorAll('.pbtn').forEach(b=>b.classList.toggle('on',b.dataset.product===p));
+  document.querySelectorAll('.chip[data-office]').forEach(c=>{
+    const mine=PRODUCT_OFFICES[p].includes(c.dataset.office);
+    c.classList.toggle('on',mine);
+  });
+  document.querySelector('.tab[data-tab="rev"]').style.display = p==='wmt'?'':'none';
+  if(p==='wg'&&state.tab==='rev') state.tab='exp';
+  setTab(state.tab);
+}
+const ALL_MONTHS = [...new Set([...DATA.map(t=>t.mk), ...REV.map(r=>r.mk)])].sort();
+function setTab(t){
+  state.tab=t;
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on',v.id==='view-'+t));
+  document.querySelectorAll('.chip[data-office]').forEach(c=>{
+    const mine=PRODUCT_OFFICES[state.product].includes(c.dataset.office);
+    c.style.display = (t==='exp'&&mine&&PRODUCT_OFFICES[state.product].length>1)?'':'none';
+  });
+  render();
+}
+function monthsInRange(){
+  if(state.range==='all') return ALL_MONTHS;
+  if(state.range==='ytd') return ALL_MONTHS.filter(m=>m>='2026-01');
+  if(state.range.startsWith('m:')) return [state.range.slice(2)];
+  const n = state.range==='3m'?3:6;
+  return ALL_MONTHS.slice(-n);
+}
+/* populate single-month options (newest first) */
+{
+  const og=document.getElementById('monthOpts');
+  [...ALL_MONTHS].reverse().forEach(mk=>{
+    const o=document.createElement('option');
+    o.value='m:'+mk; o.textContent=monLbl(mk); og.appendChild(o);
+  });
+}
+function filtered(){
+  const ms=new Set(monthsInRange());
+  return DATA.filter(t=>state.offices.has(t.office)&&ms.has(t.mk));
+}
+const isInternal = t => t.type==='Internal Transfer';
+
+/* ---------- tooltip ---------- */
+const tip=document.getElementById('tip');
+function showTip(html,x,y){ tip.innerHTML=html; tip.style.display='block';
+  const w=tip.offsetWidth,h=tip.offsetHeight;
+  tip.style.left=Math.min(x+14,innerWidth-w-8)+'px';
+  tip.style.top=Math.max(8,Math.min(y-h-10,innerHeight-h-8))+'px'; }
+function hideTip(){ tip.style.display='none'; }
+
+/* ---------- charts (SVG) ---------- */
+function svgEl(w,h){ const s=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  s.setAttribute('viewBox',`0 0 ${w} ${h}`); s.setAttribute('width','100%'); return s; }
+function rect(s,x,y,w,h,fill,rTop){
+  const p=document.createElementNS(s.namespaceURI,'path'); const r=Math.min(rTop,w/2,Math.abs(h));
+  p.setAttribute('d',`M${x} ${y+h}V${y+r}Q${x} ${y} ${x+r} ${y}H${x+w-r}Q${x+w} ${y} ${x+w} ${y+r}V${y+h}Z`);
+  p.setAttribute('fill',fill); s.appendChild(p); return p; }
+function line(s,x1,y1,x2,y2,cls){ const l=document.createElementNS(s.namespaceURI,'line');
+  l.setAttribute('x1',x1);l.setAttribute('y1',y1);l.setAttribute('x2',x2);l.setAttribute('y2',y2);
+  l.setAttribute('class',cls); s.appendChild(l); return l; }
+function text(s,x,y,str,anchor,cls){ const t=document.createElementNS(s.namespaceURI,'text');
+  t.setAttribute('x',x);t.setAttribute('y',y);t.setAttribute('text-anchor',anchor||'start');
+  if(cls)t.setAttribute('class',cls); t.textContent=str; s.appendChild(t); return t; }
+function niceMax(v){ const p=Math.pow(10,Math.floor(Math.log10(v||1)));
+  for(const m of [1,2,2.5,5,10]) if(m*p>=v) return m*p; return 10*p; }
+
+function chartMonthly(el, months, inflow, outflow){
+  el.innerHTML='';
+  const W=1100,H=300,L=52,R=10,T=14,B=30, cw=(W-L-R)/Math.max(months.length,1);
+  const mx=niceMax(Math.max(...inflow,...outflow.map(Math.abs),1));
+  const s=svgEl(W,H); const y=v=>T+(H-T-B)*(1-v/mx);
+  for(let i=0;i<=4;i++){ const v=mx*i/4; line(s,L,y(v),W-R,y(v),i?'gl':'gl');
+    text(s,L-8,y(v)+4,fmtK(v),'end'); }
+  line(s,L,H-B,W-R,H-B,'bl');
+  months.forEach((mk,i)=>{
+    const x0=L+i*cw, bw=Math.min(26,(cw-10)/2);
+    const gap=2, xin=x0+cw/2-bw-gap/2, xout=x0+cw/2+gap/2;
+    const vi=inflow[i], vo=Math.abs(outflow[i]);
+    const bi=rect(s,xin,y(vi),bw,H-B-y(vi),css('--in'),4);
+    const bo=rect(s,xout,y(vo),bw,H-B-y(vo),css('--out'),4);
+    text(s,x0+cw/2,H-B+16,monLbl(mk),'middle');
+    const hover=document.createElementNS(s.namespaceURI,'rect');
+    hover.setAttribute('x',x0);hover.setAttribute('y',T);hover.setAttribute('width',cw);
+    hover.setAttribute('height',H-T-B);hover.setAttribute('fill','transparent');
+    hover.addEventListener('mousemove',e=>showTip(
+      `<b>${monLbl(mk)}</b><br>In: <b>${fmt$(vi)}</b><br>Out: <b>${fmt$(-vo)}</b><br>Net: <b>${fmt$(vi-vo)}</b>`,e.clientX,e.clientY));
+    hover.addEventListener('mouseleave',hideTip); s.appendChild(hover);
+  });
+  el.appendChild(s);
+}
+
+function hbars(el, items, colorFn, labelFn, fmtFn){
+  const fmtV = fmtFn || fmtK;
+  el.innerHTML='';
+  const W=520, rowH=30, L=150, R=64, H=items.length*rowH+8;
+  const mx=niceMax(Math.max(...items.map(d=>d.v),1));
+  const s=svgEl(W,H);
+  items.forEach((d,i)=>{
+    const yy=4+i*rowH, bw=(W-L-R)*d.v/mx;
+    text(s,L-8,yy+rowH/2+4,d.label.length>20?d.label.slice(0,19)+'…':d.label,'end');
+    const b=rect(s,L,yy+5,Math.max(bw,2),rowH-12,colorFn(d,i),0);
+    b.setAttribute('rx','4');
+    text(s,L+Math.max(bw,2)+6,yy+rowH/2+4,fmtV(d.v),'start','dl');
+    const hv=document.createElementNS(s.namespaceURI,'rect');
+    hv.setAttribute('x',0);hv.setAttribute('y',yy);hv.setAttribute('width',W);hv.setAttribute('height',rowH);
+    hv.setAttribute('fill','transparent');
+    hv.addEventListener('mousemove',e=>showTip(labelFn(d),e.clientX,e.clientY));
+    hv.addEventListener('mouseleave',hideTip); s.appendChild(hv);
+  });
+  el.appendChild(s);
+}
+
+/* ---------- table ---------- */
+function renderTable(rows){
+  const q=state.q.toLowerCase();
+  const match=rows.filter(t=>!q||[t.desc,t.cat,t.notes,t.office,t.type].join(' ').toLowerCase().includes(q))
+    .sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  document.getElementById('tblCount').textContent=`${match.length.toLocaleString()} transactions`;
+  const tb=document.getElementById('tbody'); tb.innerHTML='';
+  match.slice(0,state.rows).forEach(t=>{
+    const tr=document.createElement('tr');
+    const u=usd(t);
+    tr.innerHTML=`<td>${t.date||t.mk}</td>
+      <td><span class="pill">${OFF_SHORT[t.office]}</span></td>
+      <td>${t.cat}${isInternal(t)?' <span class="pill">internal</span>':''}</td>
+      <td>${t.desc||''}${t.notes?` <span style="color:var(--muted)">· ${t.notes}</span>`:''}</td>
+      <td class="num ${t.amt>0?'pos':'neg'}">${fmtNat(t)}</td>
+      <td class="num ${t.amt>0?'pos':'neg'}">${fmt$(u)}</td>`;
+    tb.appendChild(tr);
+  });
+  document.getElementById('moreBtn').style.display = match.length>state.rows?'':'none';
+}
+function showMore(){ state.rows+=100; render(); }
+
+/* ---------- single-series bar chart ---------- */
+function chartBars(el, months, vals, color, tipFn){
+  el.innerHTML='';
+  const W=1100,H=300,L=52,R=10,T=14,B=30, cw=(W-L-R)/Math.max(months.length,1);
+  const mx=niceMax(Math.max(...vals.map(Math.abs),1));
+  const s=svgEl(W,H); const y=v=>T+(H-T-B)*(1-v/mx);
+  for(let i=0;i<=4;i++){ const v=mx*i/4; line(s,L,y(v),W-R,y(v),'gl'); text(s,L-8,y(v)+4,fmtK(v),'end'); }
+  line(s,L,H-B,W-R,H-B,'bl');
+  months.forEach((mk,i)=>{
+    const x0=L+i*cw, bw=Math.min(44,cw-14);
+    const v=Math.abs(vals[i]);
+    rect(s,x0+(cw-bw)/2,y(v),bw,H-B-y(v),color,4);
+    text(s,x0+cw/2,H-B+16,monLbl(mk),'middle');
+    const hv=document.createElementNS(s.namespaceURI,'rect');
+    hv.setAttribute('x',x0);hv.setAttribute('y',T);hv.setAttribute('width',cw);hv.setAttribute('height',H-T-B);
+    hv.setAttribute('fill','transparent');
+    hv.addEventListener('mousemove',e=>showTip(tipFn(mk,i),e.clientX,e.clientY));
+    hv.addEventListener('mouseleave',hideTip); s.appendChild(hv);
+  });
+  el.appendChild(s);
+}
+
+/* ---------- revenue view ---------- */
+function revInRange(){ const ms=new Set(monthsInRange()); return REV.filter(r=>ms.has(r.mk)); }
+function renderRevenue(){
+  const rows=revInRange();
+  const tot=rows.reduce((a,r)=>a+r.amt,0), n=rows.reduce((a,r)=>a+r.n,0);
+  const ms=monthsInRange().filter(mk=>REV.some(r=>r.mk===mk));
+  document.getElementById('rTot').textContent=fmt$(tot);
+  document.getElementById('rTotSub').textContent= ms.length? (ms.length===1?monLbl(ms[0]):`${monLbl(ms[0])} – ${monLbl(ms[ms.length-1])}`):'no data in range';
+  document.getElementById('rN').textContent=n.toLocaleString();
+  document.getElementById('rAvg').textContent=n?fmt$(tot/n):'–';
+  const perM=ms.map(mk=>rows.filter(r=>r.mk===mk).reduce((a,r)=>a+r.amt,0));
+  const bi=perM.indexOf(Math.max(...perM,0));
+  document.getElementById('rBest').textContent= ms.length?monLbl(ms[bi]):'–';
+  document.getElementById('rBestSub').textContent= ms.length?fmt$(perM[bi]):'';
+  chartBars(document.getElementById('chRevMonthly'),ms,perM,css('--in'),
+    (mk,i)=>`<b>${monLbl(mk)}</b><br>Revenue: <b>${fmt$(perM[i])}</b><br>Deals: <b>${rows.filter(r=>r.mk===mk).reduce((a,r)=>a+r.n,0).toLocaleString()}</b>`);
+  const byC={}, byCn={};
+  rows.forEach(r=>{byC[r.c]=(byC[r.c]||0)+r.amt; byCn[r.c]=(byCn[r.c]||0)+r.n;});
+  const cats=Object.entries(byC).map(([label,v])=>({label,v})).sort((a,b)=>b.v-a.v).slice(0,10);
+  hbars(document.getElementById('chRevCountry'),cats,()=>css('--in'),
+    d=>`<b>${d.label}</b><br>Revenue: <b>${fmt$(d.v)}</b><br>Deals: <b>${(byCn[d.label]||0).toLocaleString()}</b>`);
+  const dls=Object.entries(byCn).map(([label,v])=>({label,v})).sort((a,b)=>b.v-a.v).slice(0,10);
+  hbars(document.getElementById('chRevDeals'),dls,()=>css('--s3'),
+    d=>`<b>${d.label}</b><br>Deals: <b>${d.v.toLocaleString()}</b>`,
+    v=>v.toLocaleString('en-US'));
+}
+
+/* ---------- profit chart: revenue bar vs stacked payout+cost bar ---------- */
+function chartProf(el, months, rev, pay, cost){
+  el.innerHTML='';
+  const W=1100,H=300,L=52,R=10,T=14,B=30, cw=(W-L-R)/Math.max(months.length,1);
+  const mx=niceMax(Math.max(...rev,...months.map((_,i)=>pay[i]+cost[i]),1));
+  const s=svgEl(W,H); const y=v=>T+(H-T-B)*(1-v/mx);
+  for(let i=0;i<=4;i++){ const v=mx*i/4; line(s,L,y(v),W-R,y(v),'gl'); text(s,L-8,y(v)+4,fmtK(v),'end'); }
+  line(s,L,H-B,W-R,H-B,'bl');
+  months.forEach((mk,i)=>{
+    const x0=L+i*cw, bw=Math.min(26,(cw-10)/2), gap=2;
+    const xr=x0+cw/2-bw-gap/2, xo=x0+cw/2+gap/2;
+    rect(s,xr,y(rev[i]),bw,H-B-y(rev[i]),css('--in'),4);
+    // stacked: payout at bottom, cost on top with 2px gap
+    const yPay=y(pay[i]);
+    rect(s,xo,yPay,bw,H-B-yPay,css('--out'),0);
+    const hCost=(H-T-B)*cost[i]/mx;
+    if(hCost>2) rect(s,xo,yPay-2-hCost,bw,hCost,css('--s3'),4);
+    text(s,x0+cw/2,H-B+16,monLbl(mk),'middle');
+    const hv=document.createElementNS(s.namespaceURI,'rect');
+    hv.setAttribute('x',x0);hv.setAttribute('y',T);hv.setAttribute('width',cw);hv.setAttribute('height',H-T-B);
+    hv.setAttribute('fill','transparent');
+    const p=rev[i]-pay[i]-cost[i];
+    hv.addEventListener('mousemove',e=>showTip(
+      `<b>${monLbl(mk)}</b><br>Revenue: <b>${fmt$(rev[i])}</b><br>Payouts: <b>${fmt$(-pay[i])}</b><br>Costs: <b>${fmt$(-cost[i])}</b><br>Profit: <b>${fmt$(p)}</b>`,e.clientX,e.clientY));
+    hv.addEventListener('mouseleave',hideTip); s.appendChild(hv);
+  });
+  el.appendChild(s);
+}
+
+/* ---------- operation profit view ---------- */
+function payInRange(){ const ms=new Set(monthsInRange()); return PAY.filter(r=>ms.has(r.mk)); }
+function renderProfit(){
+  const wg = state.product==='wg';
+  const offs = new Set(PRODUCT_OFFICES[state.product]);
+  const inProd = t => offs.has(t.office);
+  const ms=monthsInRange().filter(mk=> wg
+    ? DATA.some(t=>t.mk===mk&&inProd(t))
+    : (REV.some(r=>r.mk===mk)||DATA.some(t=>t.mk===mk&&inProd(t))));
+  const rev=ms.map(mk=> wg?0:REV.filter(r=>r.mk===mk).reduce((a,r)=>a+r.amt,0));
+  const pay=ms.map(mk=> wg?0:PAY.filter(r=>r.mk===mk).reduce((a,r)=>a+r.amt,0));
+  const cost=ms.map(mk=>-DATA.filter(t=>t.mk===mk&&inProd(t)&&t.amt<0&&!isInternal(t)).reduce((a,t)=>a+usd(t),0));
+  document.getElementById('pRevSub').textContent = wg?'WeGolden — no revenue yet (build phase)':'WMT MENA (HubSpot report)';
+  document.getElementById('pCostSub').textContent = wg?'WeGolden Egypt office expenses':'Dubai + Alexandria office expenses';
+  document.getElementById('pPayCard').style.display = wg?'none':'';
+  document.getElementById('cardPayCountry').style.display = wg?'none':'';
+  document.getElementById('cardPaySplit').style.display = wg?'none':'';
+  document.getElementById('chProfTitle').innerHTML = wg?'Revenue vs costs by month (USD)':'Revenue vs payouts &amp; costs by month (USD)';
+  document.getElementById('chProfNote').textContent = wg
+    ?'Operation profit = revenue − costs. WeGolden has no revenue yet, so profit equals −costs.'
+    :'Operation profit = revenue − payouts − costs. Right bar stacks payouts and costs. WeGolden is excluded from all WMT figures.';
+  const tr=rev.reduce((a,b)=>a+b,0), tp=pay.reduce((a,b)=>a+b,0), tc=cost.reduce((a,b)=>a+b,0);
+  document.getElementById('pRev').textContent=fmt$(tr);
+  document.getElementById('pPay').textContent=fmt$(-tp);
+  document.getElementById('pCost').textContent=fmt$(-tc);
+  const net=tr-tp-tc, pn=document.getElementById('pNet');
+  pn.textContent=fmt$(net); pn.style.color=net>=0?'var(--good)':'var(--bad)';
+  document.getElementById('pNetSub').textContent=(tr?(net/tr*100).toFixed(1)+'% margin · ':'')+
+    (ms.length===1?monLbl(ms[0]):`${monLbl(ms[0])} – ${monLbl(ms[ms.length-1])}`);
+  document.getElementById('legPay').style.display = wg?'none':'';
+  chartProf(document.getElementById('chProf'),ms,rev,pay,cost);
+  if(wg){ renderProfitTable(ms,rev,pay,cost,true); return; }
+  const prows=payInRange();
+  const byC={};
+  prows.forEach(r=>{ byC[r.c]=byC[r.c]||{t:0,i:0};
+    if(r.kind==='Trader') byC[r.c].t+=r.amt; else byC[r.c].i+=r.amt; });
+  const cats=Object.entries(byC).map(([label,v])=>({label,v:v.t+v.i,t:v.t,i:v.i}))
+    .sort((a,b)=>b.v-a.v).slice(0,10);
+  hbars(document.getElementById('chPayCountry'),cats,()=>css('--out'),
+    d=>`<b>${d.label}</b><br>Trader: <b>${fmt$(d.t)}</b><br>Partner (IP): <b>${fmt$(d.i)}</b><br>Total: <b>${fmt$(d.v)}</b>`);
+  const payT=ms.map(mk=>PAY.filter(r=>r.mk===mk&&r.kind==='Trader').reduce((a,r)=>a+r.amt,0));
+  const payI=ms.map(mk=>PAY.filter(r=>r.mk===mk&&r.kind!=='Trader').reduce((a,r)=>a+r.amt,0));
+  chartPaySplit(document.getElementById('chPaySplit'),ms,payT,payI);
+  renderProfitTable(ms,rev,pay,cost,false);
+}
+function renderProfitTable(ms,rev,pay,cost,wg){
+  const tr=rev.reduce((a,b)=>a+b,0), tp=pay.reduce((a,b)=>a+b,0), tc=cost.reduce((a,b)=>a+b,0);
+  const net=tr-tp-tc;
+  const tb=document.getElementById('pTbody'); tb.innerHTML='';
+  ms.forEach((mk,i)=>{
+    const p=rev[i]-pay[i]-cost[i];
+    const trw=document.createElement('tr');
+    trw.innerHTML=`<td>${monLbl(mk)}</td><td class="num">${fmt$(rev[i])}</td>
+      <td class="num">${wg?'—':fmt$(-pay[i])}</td>
+      <td class="num">${fmt$(-cost[i])}</td>
+      <td class="num" style="color:${p>=0?'var(--good)':'var(--bad)'}">${fmt$(p)}</td>
+      <td class="num">${rev[i]?Math.round(p/rev[i]*100)+'%':'—'}</td>`;
+    tb.appendChild(trw);
+  });
+  const tot=document.createElement('tr'); tot.className='tot';
+  tot.innerHTML=`<td>Total</td><td class="num">${fmt$(tr)}</td><td class="num">${wg?'—':fmt$(-tp)}</td>
+    <td class="num">${fmt$(-tc)}</td><td class="num" style="color:${net>=0?'var(--good)':'var(--bad)'}">${fmt$(net)}</td>
+    <td class="num">${tr?Math.round(net/tr*100)+'%':'—'}</td>`;
+  tb.appendChild(tot);
+}
+function chartPaySplit(el, months, a, b){
+  el.innerHTML='';
+  const W=520,H=260,L=48,R=8,T=12,B=28, cw=(W-L-R)/Math.max(months.length,1);
+  const mx=niceMax(Math.max(...a,...b,1));
+  const s=svgEl(W,H); const y=v=>T+(H-T-B)*(1-v/mx);
+  for(let i=0;i<=4;i++){ const v=mx*i/4; line(s,L,y(v),W-R,y(v),'gl'); text(s,L-6,y(v)+4,fmtK(v),'end'); }
+  line(s,L,H-B,W-R,H-B,'bl');
+  months.forEach((mk,i)=>{
+    const x0=L+i*cw, bw=Math.min(14,(cw-6)/2), gap=2;
+    rect(s,x0+cw/2-bw-gap/2,y(a[i]),bw,H-B-y(a[i]),css('--out'),3);
+    rect(s,x0+cw/2+gap/2,y(b[i]),bw,H-B-y(b[i]),css('--s3'),3);
+    if(months.length<=13 && i%2===0) text(s,x0+cw/2,H-B+14,monLbl(mk),'middle');
+    const hv=document.createElementNS(s.namespaceURI,'rect');
+    hv.setAttribute('x',x0);hv.setAttribute('y',T);hv.setAttribute('width',cw);hv.setAttribute('height',H-T-B);
+    hv.setAttribute('fill','transparent');
+    hv.addEventListener('mousemove',e=>showTip(
+      `<b>${monLbl(mk)}</b><br>Trader: <b>${fmt$(a[i])}</b><br>Partner (IP): <b>${fmt$(b[i])}</b>`,e.clientX,e.clientY));
+    hv.addEventListener('mouseleave',hideTip); s.appendChild(hv);
+  });
+  el.appendChild(s);
+}
+
+/* ---------- main render ---------- */
+function render(){
+  if(state.tab==='rev'){ renderRevenue(); return; }
+  if(state.tab==='prof'){ renderProfit(); return; }
+  const rows=filtered();
+  const msAll=monthsInRange().filter(mk=>DATA.some(t=>t.mk===mk&&state.offices.has(t.office)));
+  const flow=rows.filter(t=>!isInternal(t));
+  const tin=flow.filter(t=>t.amt>0).reduce((a,t)=>a+usd(t),0);
+  const tout=flow.filter(t=>t.amt<0).reduce((a,t)=>a+usd(t),0);
+  document.getElementById('kIn').textContent=fmt$(tin);
+  document.getElementById('kOut').textContent=fmt$(tout);
+  const net=tin+tout, kn=document.getElementById('kNet');
+  kn.textContent=fmt$(net); kn.style.color=net>=0?'var(--good)':'var(--bad)';
+  document.getElementById('kN').textContent=rows.length.toLocaleString();
+  const ms=msAll;
+  document.getElementById('kInSub').textContent='income + funding received';
+  document.getElementById('kOutSub').textContent='expenses (internal transfers excluded)';
+  document.getElementById('kNetSub').textContent= !ms.length ? 'no data in range'
+    : ms.length===1 ? monLbl(ms[0])
+    : `${monLbl(ms[0])} – ${monLbl(ms[ms.length-1])}`;
+  document.getElementById('kNSub').textContent='in selected period';
+
+  const inflow=ms.map(mk=>flow.filter(t=>t.mk===mk&&t.amt>0).reduce((a,t)=>a+usd(t),0));
+  const outflow=ms.map(mk=>flow.filter(t=>t.mk===mk&&t.amt<0).reduce((a,t)=>a+usd(t),0));
+  chartMonthly(document.getElementById('chMonthly'),ms,inflow,outflow);
+
+  const byCat={};
+  flow.filter(t=>t.amt<0).forEach(t=>{byCat[t.cat]=(byCat[t.cat]||0)-usd(t);});
+  const cats=Object.entries(byCat).map(([label,v])=>({label,v})).sort((a,b)=>b.v-a.v).slice(0,10);
+  hbars(document.getElementById('chCat'),cats,()=>css('--in'),
+    d=>`<b>${d.label}</b><br>Spend: <b>${fmt$(-d.v)}</b>`);
+
+  const offs=[...state.offices].map(o=>({label:OFF_SHORT[o],office:o,
+    v:-flow.filter(t=>t.office===o&&t.amt<0).reduce((a,t)=>a+usd(t),0)})).sort((a,b)=>b.v-a.v);
+  hbars(document.getElementById('chOffice'),offs,d=>css(OFF_COLOR[d.office]),
+    d=>`<b>${d.label}</b><br>Spend: <b>${fmt$(-d.v)}</b>`);
+
+  renderTable(rows);
+}
+
+/* ---------- events ---------- */
+document.querySelectorAll('.chip[data-office]').forEach(ch=>{
+  ch.addEventListener('click',()=>{
+    const o=ch.dataset.office;
+    if(state.offices.has(o)&&state.offices.size>1){state.offices.delete(o);ch.classList.remove('on');}
+    else if(!state.offices.has(o)){state.offices.add(o);ch.classList.add('on');}
+    state.rows=50; render();
+  });
+});
+document.getElementById('range').addEventListener('change',e=>{state.range=e.target.value;state.rows=50;render();});
+document.getElementById('q').addEventListener('input',e=>{state.q=e.target.value;state.rows=50;renderTable(filtered());});
+</script>
+</body>
+</html>
