@@ -5,7 +5,7 @@ data=json.loads(s[i+len('const DATA = '):j+1])
 print('total',len(data), 'dubai',sum(1 for d in data if d['office']=='Dubai'))
 other=[d for d in data if d['office']!='Dubai']
 L=pd.read_pickle('/home/claude/work/ledger_final.pkl')
-L=L[L.Type!='WeGolden (excluded)']
+L=L[~L.Type.isin(['WeGolden (excluded)','Personal (excluded)'])]
 new=[]
 for _,r in L.iterrows():
     new.append({"office":"Dubai","mk":r.Date.strftime('%Y-%m'),"date":r.Date.strftime('%Y-%m-%d'),
