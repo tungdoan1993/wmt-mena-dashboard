@@ -253,7 +253,25 @@ const REV = __REV__;
 const PAY = __PAY__;
 const ASOF = "__ASOF__";
 const RATES = { AED: 3.6725, EGP_ALEX: 52.93, EGP_WG: 45.11 };
-window.addEventListener('DOMContentLoaded',render);
+/* ---------- per-product URLs: …/wmt/ and …/wg/ ---------- */
+function pathSegs(){ return location.pathname.split('/').filter(s=>s&&s.toLowerCase()!=='index.html'); }
+function productFromPath(){
+  const segs=pathSegs(), last=segs[segs.length-1];
+  return (last==='wmt'||last==='wg') ? last : null;
+}
+function syncProductUrl(p){
+  if(location.protocol==='file:') return;
+  try{
+    const segs=pathSegs(), last=segs[segs.length-1];
+    if(last==='wmt'||last==='wg') segs.pop();
+    history.replaceState(null,'','/'+segs.concat(p).join('/')+'/'+location.search+location.hash);
+  }catch(e){}
+}
+window.addEventListener('DOMContentLoaded',()=>{
+  const p=productFromPath();
+  if(p&&p!==state.product) setProduct(p);
+  else { if(p) document.title='WeMasterTrade — MENA Operations Dashboard'; render(); }
+});
 
 /* ---------- theme ---------- */
 function toggleTheme(){
@@ -293,6 +311,8 @@ function setProduct(p){
   document.querySelector('.tab[data-tab="rev"]').style.display = p==='wmt'?'':'none';
   if(p==='wg'&&state.tab==='rev') state.tab='exp';
   setTab(state.tab);
+  syncProductUrl(p);
+  document.title = (p==='wg'?'WeGolden':'WeMasterTrade')+' — MENA Operations Dashboard';
 }
 const ALL_MONTHS = [...new Set([...DATA.map(t=>t.mk), ...REV.map(r=>r.mk)])].sort();
 function setTab(t){
