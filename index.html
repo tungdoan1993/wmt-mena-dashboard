@@ -311,8 +311,29 @@ const OFF_SHORT = {'Dubai':'Dubai','WMT Alexandria':'Alexandria','WeGolden Egypt
 /* ---------- state & filtering ---------- */
 const PRODUCT_OFFICES = { wmt:['Dubai','WMT Alexandria'], wg:['WeGolden Egypt'] };
 const state = { product:'wmt', offices:new Set(PRODUCT_OFFICES.wmt), range:'all', q:'', rows:50, tab:'exp' };
+/* ---------- per-product URLs ----------
+   Root, /wmt/ and /wg/ all serve the same page. The page reads the product from
+   the last path segment on load, and rewrites the address bar when the product
+   button is clicked, so a link can be copied straight out of the browser.
+   Skipped on file:// so local preview still works. */
+const PRODUCT_TITLE = { wmt:'WeMasterTrade — MENA Expense Dashboard',
+                        wg :'WeGolden — MENA Expense Dashboard' };
+function productFromPath(){
+  const seg = location.pathname.replace(/\/+$/,'').split('/').pop().toLowerCase();
+  return (seg==='wg'||seg==='wmt') ? seg : null;
+}
+function syncURL(p){
+  document.title = PRODUCT_TITLE[p] || document.title;
+  if(location.protocol==='file:') return;
+  const parts = location.pathname.replace(/\/+$/,'').split('/');
+  const last = (parts[parts.length-1]||'').toLowerCase();
+  if(last==='wmt'||last==='wg') parts.pop();
+  const path = parts.join('/') + '/' + p + '/';
+  try{ history.replaceState(null,'',path + location.search + location.hash); }catch(e){}
+}
 function setProduct(p){
   state.product=p; state.offices=new Set(PRODUCT_OFFICES[p]); state.rows=50;
+  syncURL(p);
   document.querySelectorAll('.pbtn').forEach(b=>b.classList.toggle('on',b.dataset.product===p));
   document.querySelectorAll('.chip[data-office]').forEach(c=>{
     const mine=PRODUCT_OFFICES[p].includes(c.dataset.office);
@@ -662,6 +683,9 @@ document.querySelectorAll('.chip[data-office]').forEach(ch=>{
 });
 document.getElementById('range').addEventListener('change',e=>{state.range=e.target.value;state.rows=50;render();});
 document.getElementById('q').addEventListener('input',e=>{state.q=e.target.value;state.rows=50;renderTable(filtered());});
+
+/* boot: honour /wmt/ or /wg/ in the URL, default to WeMasterTrade */
+setProduct(productFromPath() || 'wmt');
 </script>
 </body>
 </html>
