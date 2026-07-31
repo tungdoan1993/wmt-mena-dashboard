@@ -316,24 +316,32 @@ const state = { product:'wmt', offices:new Set(PRODUCT_OFFICES.wmt), range:'all'
    the last path segment on load, and rewrites the address bar when the product
    button is clicked, so a link can be copied straight out of the browser.
    Skipped on file:// so local preview still works. */
-const PRODUCT_TITLE = { wmt:'WeMasterTrade — MENA Expense Dashboard',
-                        wg :'WeGolden — MENA Expense Dashboard' };
+const PRODUCT_TITLE = { wmt:'WeMasterTrade', wg:'WeGolden' };
+const TAB_SLUG  = { exp:'expenses', rev:'revenue', prof:'operation-profit' };
+const SLUG_TAB  = { expenses:'exp', revenue:'rev', 'operation-profit':'prof' };
+const TAB_TITLE = { exp:'Expenses', rev:'MENA Revenue', prof:'Operation Profit' };
 function productFromPath(){
   const seg = location.pathname.replace(/\/+$/,'').split('/').pop().toLowerCase();
   return (seg==='wg'||seg==='wmt') ? seg : null;
 }
-function syncURL(p){
-  document.title = PRODUCT_TITLE[p] || document.title;
+function tabFromHash(){
+  const h = decodeURIComponent((location.hash||'').replace(/^#/,'')).toLowerCase();
+  return SLUG_TAB[h] || null;
+}
+/* Address bar mirrors product AND tab, so any view can be copied and shared:
+   .../wmt/#operation-profit  ·  .../wg/#expenses  */
+function syncURL(){
+  const p = state.product, t = state.tab;
+  document.title = PRODUCT_TITLE[p] + ' · ' + TAB_TITLE[t] + ' — MENA Dashboard';
   if(location.protocol==='file:') return;
   const parts = location.pathname.replace(/\/+$/,'').split('/');
   const last = (parts[parts.length-1]||'').toLowerCase();
   if(last==='wmt'||last==='wg') parts.pop();
   const path = parts.join('/') + '/' + p + '/';
-  try{ history.replaceState(null,'',path + location.search + location.hash); }catch(e){}
+  try{ history.replaceState(null,'',path + location.search + '#' + TAB_SLUG[t]); }catch(e){}
 }
 function setProduct(p){
   state.product=p; state.offices=new Set(PRODUCT_OFFICES[p]); state.rows=50;
-  syncURL(p);
   document.querySelectorAll('.pbtn').forEach(b=>b.classList.toggle('on',b.dataset.product===p));
   document.querySelectorAll('.chip[data-office]').forEach(c=>{
     const mine=PRODUCT_OFFICES[p].includes(c.dataset.office);
@@ -352,6 +360,7 @@ function setTab(t){
     const mine=PRODUCT_OFFICES[state.product].includes(c.dataset.office);
     c.style.display = (t==='exp'&&mine&&PRODUCT_OFFICES[state.product].length>1)?'':'none';
   });
+  syncURL();
   render();
 }
 function monthsInRange(){
@@ -684,8 +693,13 @@ document.querySelectorAll('.chip[data-office]').forEach(ch=>{
 document.getElementById('range').addEventListener('change',e=>{state.range=e.target.value;state.rows=50;render();});
 document.getElementById('q').addEventListener('input',e=>{state.q=e.target.value;state.rows=50;renderTable(filtered());});
 
-/* boot: honour /wmt/ or /wg/ in the URL, default to WeMasterTrade */
+/* boot: honour /wmt/ or /wg/ plus the #tab in the URL */
+state.tab = tabFromHash() || 'exp';
 setProduct(productFromPath() || 'wmt');
+window.addEventListener('hashchange',()=>{
+  const t = tabFromHash();
+  if(t && t!==state.tab && !(state.product==='wg' && t==='rev')) setTab(t);
+});
 </script>
 </body>
 </html>
