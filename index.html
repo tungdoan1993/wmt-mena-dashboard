@@ -344,7 +344,7 @@ footer b{color:var(--color-accent-800)}
   <div><b>Products.</b> WeMasterTrade figures cover the Dubai + Alexandria offices and WMT MENA revenue and payouts only — WeGolden money is fully excluded. WeGolden has its own expenses and operation profit, and no revenue yet (build phase).</div>
   <div><b>Revenue sources.</b> HubSpot “Total MENA Revenue” (unsummarized export, closed-won WMT deals by create date) for 14 MENA countries, plus the internal CRM deal export (crm.wemastertrade.com) as the authority for <b>Syria and Iran</b> — 16 MENA countries in total. Incomplete Checkout deals are excluded; HubSpot Syria rows were replaced by the CRM figures.</div>
   <div><b>Payout sources.</b> HubSpot “MENA Trader Payout” and “MENA IP Payout” (approval amount to withdraw, by ticket create date). Operation profit = revenue − payouts − costs − marketing. $9,166 of payouts dated before Aug 2025 fall outside the period and are excluded; one Aug ’25 Iraq trader ticket has no amount and is skipped.</div>
-  <div><b>Marketing.</b> Facebook and Google paid-ads spend attributed to MENA, from the internal Paid Ads report. It is <b>paid centrally by HQ</b>, so it never passes through the Dubai or Alexandria accounts — it is deliberately absent from the expense tabs and from the bank reconciliation, and appears only as its own line here. Tracked from July 2026 (July: $40,123 — Facebook $21,450, Google $18,673); earlier months show “—” pending a backfill. MENA attribution in the source report is campaign-name based and flagged there as partial coverage, so the figure is more likely to understate than overstate.</div>
+  <div><b>Marketing.</b> Facebook and Google paid-ads spend attributed to MENA, from the internal Paid Ads report. It is <b>paid centrally by HQ</b>, so it never passes through the Dubai or Alexandria accounts — it is deliberately absent from the expense tabs and from the bank reconciliation, and appears only as its own line here. Tracked from March 2026, figures in USD as reported at source (the Google account bills in CAD and the report converts it; no further conversion is applied here). Facebook / Google by month: Mar $6,471 / $15,866 · Apr $8,659 / $16,635 · May $12,929 / $15,751 · Jun $14,920 / $11,419 · Jul $21,450 / $18,673. Paused campaigns are included. Months before March show “—”. MENA attribution in the source report is campaign-name based and flagged there as partial coverage, so the figure is more likely to understate than overstate.</div>
   <div><b>FX.</b> 1 USD = 3.6725 AED (peg) · Alexandria EGP at the actual transfer rate 52.93 · WeGolden EGP at 45.11 per report.</div>
   <div><b>Method.</b> Money in = income + funding transfers received; money out = expenses. Internal transfers between own accounts are excluded from totals and charts (still visible in the source files). WeGolden setup costs (undated) sit in Feb 2026.</div>
   <div><b>Source files.</b> Listed with links in the Audit trail panel above.</div>
@@ -380,8 +380,8 @@ const OFF_COLOR = {'Dubai':'--o-dubai','WMT Alexandria':'--o-alex','WeGolden Egy
    cost and deliberately absent from the expense tabs and the bank reconciliation.
    Source: report.wemastertrade.com/dashboard/paid-ads (region MENA). WMT only.
    Only months present here are deducted; months with no entry show "—". */
-const MKT = {'2026-07': 40123};
-const MKT_FROM = '2026-07';
+const MKT = {'2026-03': 22337, '2026-04': 25294, '2026-05': 28680, '2026-06': 26339, '2026-07': 40123};
+const MKT_FROM = '2026-03';
 const OFF_SHORT = {'Dubai':'Dubai','WMT Alexandria':'Alexandria','WeGolden Egypt':'WeGolden'};
 
 /* ---------- state & filtering ---------- */
@@ -662,7 +662,7 @@ function renderProfit(){
   document.getElementById('pMkt').textContent = tm?fmt$(-tm):'—';
   document.getElementById('pMktSub').textContent = tm
     ? (nMkt===ms.length ? 'paid ads · HQ-paid' : `paid ads · HQ-paid · ${nMkt} of ${ms.length} months tracked`)
-    : 'paid ads · tracked from Jul 2026';
+    : 'paid ads · tracked from Mar 2026';
   document.getElementById('thMkt').style.display='';
   const net=tr-tp-tc-tm, pn=document.getElementById('pNet');
   pn.textContent=fmt$(net); pn.style.color=net>=0?'var(--good)':'var(--bad)';
@@ -671,7 +671,7 @@ function renderProfit(){
     (!wg&&tm&&nMkt<ms.length?' · marketing partial':'');
   document.getElementById('pnlNote').textContent = wg
     ? 'Operation profit = revenue − costs'
-    : 'Operation profit = revenue − payouts − costs − marketing. Marketing is HQ-paid paid-ads spend, tracked from Jul 2026; “—” means not yet available.';
+    : 'Operation profit = revenue − payouts − costs − marketing. Marketing is HQ-paid paid-ads spend, tracked from Mar 2026; “—” means not yet available.';
   document.getElementById('legPay').style.display = wg?'none':'';
   chartProf(document.getElementById('chProf'),ms,rev,pay,cost);
   if(wg){ renderProfitTable(ms,rev,pay,cost,mkt,true); return; }
