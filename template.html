@@ -277,6 +277,7 @@ footer b{color:var(--color-accent-800)}
     <div class="kpi"><div class="lbl">Revenue</div><div class="val in" id="pRev">—</div><div class="sub2" id="pRevSub">WMT MENA (HubSpot)</div></div>
     <div class="kpi" id="pPayCard"><div class="lbl">Customer payouts</div><div class="val out" id="pPay">—</div><div class="sub2" id="pPaySub">trader + partner (IP)</div></div>
     <div class="kpi"><div class="lbl">Costs</div><div class="val third" id="pCost">—</div><div class="sub2" id="pCostSub">office expenses</div></div>
+    <div class="kpi" id="pMktCard"><div class="lbl">Marketing</div><div class="val third" id="pMkt">—</div><div class="sub2" id="pMktSub">paid ads — HQ-paid</div></div>
   </div>
 
   <div class="sec"><h2 id="chProfTitle">Revenue against payouts &amp; costs</h2><span class="note" id="chProfNote"></span></div>
@@ -298,11 +299,11 @@ footer b{color:var(--color-accent-800)}
     </div>
   </div>
 
-  <div class="sec"><h2>Monthly P&amp;L</h2><span class="note">Operation profit = revenue − payouts − costs</span></div>
+  <div class="sec"><h2>Monthly P&amp;L</h2><span class="note" id="pnlNote">Operation profit = revenue − payouts − costs − marketing</span></div>
   <div class="card full">
     <div class="scroll">
       <table>
-        <thead><tr><th>Month</th><th style="text-align:right">Revenue</th><th style="text-align:right">Payouts</th><th style="text-align:right">Costs</th><th style="text-align:right">Operation profit</th><th style="text-align:right">Margin</th></tr></thead>
+        <thead><tr><th>Month</th><th style="text-align:right">Revenue</th><th style="text-align:right">Payouts</th><th style="text-align:right">Costs</th><th style="text-align:right" id="thMkt">Marketing</th><th style="text-align:right">Operation profit</th><th style="text-align:right">Margin</th></tr></thead>
         <tbody id="pTbody"></tbody>
       </table>
     </div>
@@ -324,6 +325,7 @@ footer b{color:var(--color-accent-800)}
         <tr><td>FAB company account statement</td><td>Dubai bank and card movements. Authority for every AED amount and date.</td><td>Bank / Gopika Sundaran</td><td>AED</td><td><span class="muted">on request</span></td></tr>
         <tr><td>Binance transaction export</td><td>The crypto wallet. Authority for HQ funding received and every payment made in USDT.</td><td>Martin Doan</td><td>USDT</td><td><span class="muted">on request</span></td></tr>
         <tr><td>CRM deal export — Syria &amp; Iran</td><td>Syria and Iran revenue. Deal-level export from the internal CRM (crm.wemastertrade.com); these markets are not reliably carried in HubSpot. Incomplete Checkout deals excluded.</td><td>Sales / CRM team</td><td>USD</td><td><span class="muted">on request</span></td></tr>
+        <tr><td>Paid Ads report — MENA</td><td>Marketing line: Facebook and Google ad spend attributed to MENA. Paid centrally by HQ, so it sits outside the office accounts and the bank reconciliation. Attribution is campaign-name based and flagged as partial coverage at source.</td><td>Marketing team</td><td>USD</td><td><a href="https://report.wemastertrade.com/dashboard/paid-ads" target="_blank" rel="noopener">Paid Ads ↗</a></td></tr>
         <tr><td>Expense report — Dubai office</td><td>Dubai receipts, invoices, cash spending and crypto payment requests, with proof attached to each line.</td><td>Gopika Sundaran</td><td>AED</td><td><a href="https://wemastertrade-my.sharepoint.com/personal/martin_doan_wemastertrade_com/Documents/Expense%20report%20Dubai%20office.xlsx" target="_blank" rel="noopener">SharePoint &#8599;</a></td></tr>
         <tr><td>Expense Report — WMT Alexandria Office</td><td>Alexandria office spending and the log of transfers received from Dubai, with conversion proof.</td><td>Yara Hassan &#8594; Gopika</td><td>EGP</td><td><a href="https://wemastertrade-my.sharepoint.com/personal/gopika_sundaran_wemastertrade_com/Documents/Expense%20Report-%20WMT%20Alexandria%20Office.xlsx" target="_blank" rel="noopener">SharePoint &#8599;</a></td></tr>
         <tr><td>Expense Report — WeGolden Cairo Office</td><td>Cairo office spending and the log of transfers received from Dubai, with conversion proof.</td><td>Mohamed Ashraf &#8594; Gopika</td><td>EGP</td><td><a href="https://wemastertrade-my.sharepoint.com/personal/gopika_sundaran_wemastertrade_com/Documents/Expense%20Report-%20WeGolden%20Cairo%20Office.xlsx" target="_blank" rel="noopener">SharePoint &#8599;</a></td></tr>
@@ -341,7 +343,8 @@ footer b{color:var(--color-accent-800)}
 <footer>
   <div><b>Products.</b> WeMasterTrade figures cover the Dubai + Alexandria offices and WMT MENA revenue and payouts only — WeGolden money is fully excluded. WeGolden has its own expenses and operation profit, and no revenue yet (build phase).</div>
   <div><b>Revenue sources.</b> HubSpot “Total MENA Revenue” (unsummarized export, closed-won WMT deals by create date) for 14 MENA countries, plus the internal CRM deal export (crm.wemastertrade.com) as the authority for <b>Syria and Iran</b> — 16 MENA countries in total. Incomplete Checkout deals are excluded; HubSpot Syria rows were replaced by the CRM figures.</div>
-  <div><b>Payout sources.</b> HubSpot “MENA Trader Payout” and “MENA IP Payout” (approval amount to withdraw, by ticket create date). Operation profit = revenue − payouts − costs. $9,166 of payouts dated before Aug 2025 fall outside the period and are excluded; one Aug ’25 Iraq trader ticket has no amount and is skipped.</div>
+  <div><b>Payout sources.</b> HubSpot “MENA Trader Payout” and “MENA IP Payout” (approval amount to withdraw, by ticket create date). Operation profit = revenue − payouts − costs − marketing. $9,166 of payouts dated before Aug 2025 fall outside the period and are excluded; one Aug ’25 Iraq trader ticket has no amount and is skipped.</div>
+  <div><b>Marketing.</b> Facebook and Google paid-ads spend attributed to MENA, from the internal Paid Ads report. It is <b>paid centrally by HQ</b>, so it never passes through the Dubai or Alexandria accounts — it is deliberately absent from the expense tabs and from the bank reconciliation, and appears only as its own line here. Tracked from July 2026 (July: $40,123 — Facebook $21,450, Google $18,673); earlier months show “—” pending a backfill. MENA attribution in the source report is campaign-name based and flagged there as partial coverage, so the figure is more likely to understate than overstate.</div>
   <div><b>FX.</b> 1 USD = 3.6725 AED (peg) · Alexandria EGP at the actual transfer rate 52.93 · WeGolden EGP at 45.11 per report.</div>
   <div><b>Method.</b> Money in = income + funding transfers received; money out = expenses. Internal transfers between own accounts are excluded from totals and charts (still visible in the source files). WeGolden setup costs (undated) sit in Feb 2026.</div>
   <div><b>Source files.</b> Listed with links in the Audit trail panel above.</div>
@@ -373,6 +376,12 @@ const monLbl = mk => { const [y,m]=mk.split('-');
   return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m-1]+" '"+y.slice(2); };
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const OFF_COLOR = {'Dubai':'--o-dubai','WMT Alexandria':'--o-alex','WeGolden Egypt':'--o-wg'};
+/* Paid-ads spend attributed to MENA, PAID CENTRALLY BY HQ — not a Dubai/Alexandria office
+   cost and deliberately absent from the expense tabs and the bank reconciliation.
+   Source: report.wemastertrade.com/dashboard/paid-ads (region MENA). WMT only.
+   Only months present here are deducted; months with no entry show "—". */
+const MKT = {'2026-07': 40123};
+const MKT_FROM = '2026-07';
 const OFF_SHORT = {'Dubai':'Dubai','WMT Alexandria':'Alexandria','WeGolden Egypt':'WeGolden'};
 
 /* ---------- state & filtering ---------- */
@@ -633,6 +642,7 @@ function renderProfit(){
   const rev=ms.map(mk=> wg?0:REV.filter(r=>r.mk===mk).reduce((a,r)=>a+r.amt,0));
   const pay=ms.map(mk=> wg?0:PAY.filter(r=>r.mk===mk).reduce((a,r)=>a+r.amt,0));
   const cost=ms.map(mk=>-DATA.filter(t=>t.mk===mk&&inProd(t)&&t.amt<0&&!isInternal(t)).reduce((a,t)=>a+usd(t),0));
+  const mkt=ms.map(mk=> wg?0:(MKT[mk]||0));
   document.getElementById('pRevSub').textContent = wg?'WeGolden — no revenue yet (build phase)':'WMT MENA (HubSpot report)';
   document.getElementById('pCostSub').textContent = wg?'WeGolden Egypt office expenses':'Dubai + Alexandria office expenses';
   document.getElementById('pPayCard').style.display = wg?'none':'';
@@ -641,18 +651,30 @@ function renderProfit(){
   document.getElementById('chProfTitle').innerHTML = wg?'Revenue against costs':'Revenue against payouts &amp; costs';
   document.getElementById('chProfNote').textContent = wg
     ?'Operation profit = revenue − costs. WeGolden has no revenue yet, so profit equals −costs.'
-    :'Operation profit = revenue − payouts − costs. Right bar stacks payouts and costs. WeGolden is excluded from all WMT figures.';
+    :'Chart shows office costs only. HQ-paid marketing is a separate line — see the KPI above and the Monthly P&L. WeGolden is excluded from all WMT figures.';
   const tr=rev.reduce((a,b)=>a+b,0), tp=pay.reduce((a,b)=>a+b,0), tc=cost.reduce((a,b)=>a+b,0);
+  const tm=mkt.reduce((a,b)=>a+b,0);
   document.getElementById('pRev').textContent=fmt$(tr);
   document.getElementById('pPay').textContent=fmt$(-tp);
   document.getElementById('pCost').textContent=fmt$(-tc);
-  const net=tr-tp-tc, pn=document.getElementById('pNet');
+  const nMkt=ms.filter(mk=>MKT[mk]).length;
+  document.getElementById('pMktCard').style.display = wg?'none':'';
+  document.getElementById('pMkt').textContent = tm?fmt$(-tm):'—';
+  document.getElementById('pMktSub').textContent = tm
+    ? (nMkt===ms.length ? 'paid ads · HQ-paid' : `paid ads · HQ-paid · ${nMkt} of ${ms.length} months tracked`)
+    : 'paid ads · tracked from Jul 2026';
+  document.getElementById('thMkt').style.display='';
+  const net=tr-tp-tc-tm, pn=document.getElementById('pNet');
   pn.textContent=fmt$(net); pn.style.color=net>=0?'var(--good)':'var(--bad)';
   document.getElementById('pNetSub').textContent=(tr?(net/tr*100).toFixed(1)+'% margin · ':'')+
-    (ms.length===1?monLbl(ms[0]):`${monLbl(ms[0])} – ${monLbl(ms[ms.length-1])}`);
+    (ms.length===1?monLbl(ms[0]):`${monLbl(ms[0])} – ${monLbl(ms[ms.length-1])}`)+
+    (!wg&&tm&&nMkt<ms.length?' · marketing partial':'');
+  document.getElementById('pnlNote').textContent = wg
+    ? 'Operation profit = revenue − costs'
+    : 'Operation profit = revenue − payouts − costs − marketing. Marketing is HQ-paid paid-ads spend, tracked from Jul 2026; “—” means not yet available.';
   document.getElementById('legPay').style.display = wg?'none':'';
   chartProf(document.getElementById('chProf'),ms,rev,pay,cost);
-  if(wg){ renderProfitTable(ms,rev,pay,cost,true); return; }
+  if(wg){ renderProfitTable(ms,rev,pay,cost,mkt,true); return; }
   const prows=payInRange();
   const byC={};
   prows.forEach(r=>{ byC[r.c]=byC[r.c]||{t:0,i:0};
@@ -664,25 +686,28 @@ function renderProfit(){
   const payT=ms.map(mk=>PAY.filter(r=>r.mk===mk&&r.kind==='Trader').reduce((a,r)=>a+r.amt,0));
   const payI=ms.map(mk=>PAY.filter(r=>r.mk===mk&&r.kind!=='Trader').reduce((a,r)=>a+r.amt,0));
   chartPaySplit(document.getElementById('chPaySplit'),ms,payT,payI);
-  renderProfitTable(ms,rev,pay,cost,false);
+  renderProfitTable(ms,rev,pay,cost,mkt,false);
 }
-function renderProfitTable(ms,rev,pay,cost,wg){
+function renderProfitTable(ms,rev,pay,cost,mkt,wg){
   const tr=rev.reduce((a,b)=>a+b,0), tp=pay.reduce((a,b)=>a+b,0), tc=cost.reduce((a,b)=>a+b,0);
-  const net=tr-tp-tc;
+  const tm=mkt.reduce((a,b)=>a+b,0);
+  const net=tr-tp-tc-tm;
   const tb=document.getElementById('pTbody'); tb.innerHTML='';
   ms.forEach((mk,i)=>{
-    const p=rev[i]-pay[i]-cost[i];
+    const p=rev[i]-pay[i]-cost[i]-mkt[i];
     const trw=document.createElement('tr');
     trw.innerHTML=`<td>${monLbl(mk)}</td><td class="num">${fmt$(rev[i])}</td>
       <td class="num">${wg?'—':fmt$(-pay[i])}</td>
       <td class="num">${fmt$(-cost[i])}</td>
+      <td class="num">${wg||!mkt[i]?'—':fmt$(-mkt[i])}</td>
       <td class="num" style="color:${p>=0?'var(--good)':'var(--bad)'}">${fmt$(p)}</td>
       <td class="num">${rev[i]?Math.round(p/rev[i]*100)+'%':'—'}</td>`;
     tb.appendChild(trw);
   });
   const tot=document.createElement('tr'); tot.className='tot';
   tot.innerHTML=`<td>Total</td><td class="num">${fmt$(tr)}</td><td class="num">${wg?'—':fmt$(-tp)}</td>
-    <td class="num">${fmt$(-tc)}</td><td class="num" style="color:${net>=0?'var(--good)':'var(--bad)'}">${fmt$(net)}</td>
+    <td class="num">${fmt$(-tc)}</td><td class="num">${wg||!tm?'—':fmt$(-tm)}</td>
+    <td class="num" style="color:${net>=0?'var(--good)':'var(--bad)'}">${fmt$(net)}</td>
     <td class="num">${tr?Math.round(net/tr*100)+'%':'—'}</td>`;
   tb.appendChild(tot);
 }
