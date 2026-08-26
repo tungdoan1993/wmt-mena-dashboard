@@ -402,12 +402,29 @@ function productFromPath(){
   const seg = location.pathname.replace(/\/+$/,'').split('/').pop().toLowerCase();
   return (seg==='wg'||seg==='wmt') ? seg : null;
 }
-function tabFromHash(){
-  const h = decodeURIComponent((location.hash||'').replace(/^#/,'')).toLowerCase();
-  return SLUG_TAB[h] || null;
+const MON_SLUG = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+/* period slugs: aug26 = single month Aug-2026; ytd / 3m / 6m; omitted = all time */
+function rangeToSlug(r){
+  if(r==='all') return '';
+  if(r.startsWith('m:')){ const [y,m]=r.slice(2).split('-'); return MON_SLUG[+m-1]+y.slice(2); }
+  return r;
 }
+function slugToRange(sl){
+  if(!sl) return 'all';
+  if(sl==='ytd'||sl==='3m'||sl==='6m') return sl;
+  const m = /^([a-z]{3})(\d{2})$/.exec(sl);
+  if(!m) return null;
+  const mi = MON_SLUG.indexOf(m[1]); if(mi<0) return null;
+  const mk = '20'+m[2]+'-'+String(mi+1).padStart(2,'0');
+  return (typeof ALL_MONTHS!=='undefined' && ALL_MONTHS.includes(mk)) ? 'm:'+mk : null;
+}
+function hashParts(){
+  const h = decodeURIComponent((location.hash||'').replace(/^#/,'')).toLowerCase().split('/');
+  return { tab: SLUG_TAB[h[0]] || null, range: slugToRange(h[1]||'') };
+}
+function tabFromHash(){ return hashParts().tab; }
 /* Address bar mirrors product AND tab, so any view can be copied and shared:
-   .../wmt/#operation-profit  ·  .../wg/#expenses  */
+   .../wmt/#operation-profit/aug26  ·  .../wg/#expenses/ytd  */
 function syncURL(){
   const p = state.product, t = state.tab;
   document.title = PRODUCT_TITLE[p] + ' · ' + TAB_TITLE[t] + ' — MENA Dashboard';
@@ -416,7 +433,8 @@ function syncURL(){
   const last = (parts[parts.length-1]||'').toLowerCase();
   if(last==='wmt'||last==='wg') parts.pop();
   const path = parts.join('/') + '/' + p + '/';
-  try{ history.replaceState(null,'',path + location.search + '#' + TAB_SLUG[t]); }catch(e){}
+  const rs = rangeToSlug(state.range);
+  try{ history.replaceState(null,'',path + location.search + '#' + TAB_SLUG[t] + (rs?'/'+rs:'')); }catch(e){}
 }
 function setProduct(p){
   state.product=p; state.offices=new Set(PRODUCT_OFFICES[p]); state.rows=50;
@@ -822,15 +840,19 @@ document.querySelectorAll('.chip[data-office]').forEach(ch=>{
     state.rows=50; render();
   });
 });
-document.getElementById('range').addEventListener('change',e=>{state.range=e.target.value;state.rows=50;render();});
+document.getElementById('range').addEventListener('change',e=>{state.range=e.target.value;state.rows=50;syncURL();render();});
+function applyRange(r){ state.range=r; state.rows=50; const sel=document.getElementById('range'); if(sel.value!==r) sel.value=r; }
 document.getElementById('q').addEventListener('input',e=>{state.q=e.target.value;state.rows=50;renderTable(filtered());});
 
 /* boot: honour /wmt/ or /wg/ plus the #tab in the URL */
-state.tab = tabFromHash() || 'exp';
+{ const hp = hashParts(); state.tab = hp.tab || 'exp'; if(hp.range) applyRange(hp.range); }
 setProduct(productFromPath() || 'wmt');
 window.addEventListener('hashchange',()=>{
-  const t = tabFromHash();
-  if(t && t!==state.tab && !(state.product==='wg' && t==='rev')) setTab(t);
+  const hp = hashParts();
+  let changed=false;
+  if(hp.range && hp.range!==state.range){ applyRange(hp.range); changed=true; }
+  if(hp.tab && hp.tab!==state.tab && !(state.product==='wg' && hp.tab==='rev')) setTab(hp.tab);
+  else if(changed){ syncURL(); render(); }
 });
 
 </script>
