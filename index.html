@@ -255,11 +255,11 @@ footer b{color:var(--color-accent-800)}
   <div class="sec"><h2>Revenue over time</h2><span class="note">Closed-won deal amounts by create date · HubSpot “Total MENA Revenue” + internal CRM (Syria &amp; Iran)</span></div>
   <div class="card full"><div id="chRevMonthly"></div></div>
 
-  <div class="sec"><h2>Where revenue comes from</h2><span class="note">Top ten countries (Iran &amp; Syria always shown) · selected period</span></div>
+  <div class="sec"><h2>Where revenue comes from</h2><span class="note">All countries · selected period</span></div>
   <div class="cards">
     <div class="card">
       <h2>Revenue by country</h2>
-      <div class="note">Top ten by revenue (Iran &amp; Syria always shown), with payouts alongside · “% out” = payouts ÷ revenue</div>
+      <div class="note">All countries by revenue, with payouts alongside · “% out” = payouts ÷ revenue</div>
       <div class="legend"><span><i style="background:var(--in)"></i>Revenue</span><span><i style="background:var(--out)"></i>Payouts</span></div>
       <div id="chRevCountry"></div>
     </div>
@@ -290,7 +290,7 @@ footer b{color:var(--color-accent-800)}
   <div class="cards" style="margin-top:var(--space-6)">
     <div class="card" id="cardPayCountry">
       <h2>Payouts by country</h2>
-      <div class="note">Top ten by payout (Iran &amp; Syria always shown), with revenue alongside · “% out” = payouts ÷ revenue</div>
+      <div class="note">All countries by payout, with revenue alongside · “% out” = payouts ÷ revenue</div>
       <div class="legend"><span><i style="background:var(--out)"></i>Payouts</span><span><i style="background:var(--in)"></i>Revenue</span></div>
       <div id="chPayCountry"></div>
     </div>
@@ -569,15 +569,6 @@ function hbars2(el, items, primary){
   });
   el.appendChild(s);
 }
-/* top-10 of a sorted country list, but always keep Iran & Syria visible (with nonzero value) */
-function topPlusPinned(sorted, val){
-  const top = sorted.slice(0,10);
-  ['Iran','Syria'].forEach(c=>{
-    const r = sorted.find(x=>x.label===c);
-    if (r && val(r) > 0 && !top.includes(r)) top.push(r);
-  });
-  return top;
-}
 /* revenue + payouts per country for the selected period, merged on country name */
 function countryPairs(){
   const m={};
@@ -649,8 +640,8 @@ function renderRevenue(){
   const byC={}, byCn={};
   rows.forEach(r=>{byC[r.c]=(byC[r.c]||0)+r.amt; byCn[r.c]=(byCn[r.c]||0)+r.n;});
   hbars2(document.getElementById('chRevCountry'),
-    topPlusPinned(countryPairs().sort((a,b)=>b.rev-a.rev),x=>x.rev),'rev');
-  const dls=topPlusPinned(Object.entries(byCn).map(([label,v])=>({label,v})).sort((a,b)=>b.v-a.v),x=>x.v);
+    countryPairs().sort((a,b)=>b.rev-a.rev),'rev');
+  const dls=Object.entries(byCn).map(([label,v])=>({label,v})).sort((a,b)=>b.v-a.v);
   hbars(document.getElementById('chRevDeals'),dls,()=>css('--s3'),
     d=>`<b>${d.label}</b><br>Deals: <b>${d.v.toLocaleString()}</b>`,
     v=>v.toLocaleString('en-US'));
@@ -731,7 +722,7 @@ function renderProfit(){
   chartProf(document.getElementById('chProf'),ms,rev,pay,cost);
   if(wg){ renderProfitTable(ms,rev,pay,cost,mkt,true); return; }
   hbars2(document.getElementById('chPayCountry'),
-    topPlusPinned(countryPairs().sort((a,b)=>b.pay-a.pay),x=>x.pay),'pay');
+    countryPairs().sort((a,b)=>b.pay-a.pay),'pay');
   const payT=ms.map(mk=>PAY.filter(r=>r.mk===mk&&r.kind==='Trader').reduce((a,r)=>a+r.amt,0));
   const payI=ms.map(mk=>PAY.filter(r=>r.mk===mk&&r.kind!=='Trader').reduce((a,r)=>a+r.amt,0));
   chartPaySplit(document.getElementById('chPaySplit'),ms,payT,payI);
