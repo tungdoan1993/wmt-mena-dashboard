@@ -259,8 +259,8 @@ footer b{color:var(--color-accent-800)}
   <div class="cards">
     <div class="card">
       <h2>Revenue by country</h2>
-      <div class="note">All countries by revenue, with payouts alongside · “% out” = payouts ÷ revenue</div>
-      <div class="legend"><span><i style="background:var(--in)"></i>Revenue</span><span><i style="background:var(--out)"></i>Payouts</span></div>
+      <div class="note">All countries by revenue, with payouts and paid-ads spend alongside · “% out” = payouts ÷ revenue</div>
+      <div class="legend"><span><i style="background:var(--in)"></i>Revenue</span><span><i style="background:var(--out)"></i>Payouts</span><span><i style="background:var(--s3)"></i>Marketing</span></div>
       <div id="chRevCountry"></div>
     </div>
     <div class="card">
@@ -290,8 +290,8 @@ footer b{color:var(--color-accent-800)}
   <div class="cards" style="margin-top:var(--space-6)">
     <div class="card" id="cardPayCountry">
       <h2>Payouts by country</h2>
-      <div class="note">All countries by payout, with revenue alongside · “% out” = payouts ÷ revenue</div>
-      <div class="legend"><span><i style="background:var(--out)"></i>Payouts</span><span><i style="background:var(--in)"></i>Revenue</span></div>
+      <div class="note">All countries by payout, with revenue and paid-ads spend alongside · “% out” = payouts ÷ revenue</div>
+      <div class="legend"><span><i style="background:var(--out)"></i>Payouts</span><span><i style="background:var(--in)"></i>Revenue</span><span><i style="background:var(--s3)"></i>Marketing</span></div>
       <div id="chPayCountry"></div>
     </div>
     <div class="card" id="cardPaySplit">
@@ -382,7 +382,9 @@ const OFF_COLOR = {'Dubai':'--o-dubai','WMT Alexandria':'--o-alex','WeGolden Egy
    cost and deliberately absent from the expense tabs and the bank reconciliation.
    Source: report.wemastertrade.com/dashboard/paid-ads (region MENA). WMT only.
    Only months present here are deducted; months with no entry show "—". */
-const MKT = {'2025-08': 1280, '2025-09': 8586, '2025-10': 30722, '2025-11': 27783, '2025-12': 23893, '2026-01': 16500, '2026-02': 21325, '2026-03': 23013, '2026-04': 26130, '2026-05': 29887, '2026-06': 27597, '2026-07': 41254, '2026-08': 35641};
+const MKT = {'2025-08': 2208, '2025-09': 8283, '2025-10': 29697, '2025-11': 27125, '2025-12': 23349, '2026-01': 15822, '2026-02': 20700, '2026-03': 22503, '2026-04': 25425, '2026-05': 28791, '2026-06': 26401, '2026-07': 40771, '2026-08': 35641};
+const MKTC_M = {"2025-08":{"Iraq":861,"Egypt":1000,"Jordan":109,"Morocco":109,"Tunisia":129},"2025-09":{"Saudi Arabia":708,"United Arab Emirates":1361,"Morocco":218,"Bahrain":108,"Oman":46,"Iraq":2295,"Egypt":1636,"Qatar":548,"Jordan":899,"Kuwait":465},"2025-10":{"Djibouti":64,"Saudi Arabia":4145,"Algeria":1028,"United Arab Emirates":5877,"Libya":632,"Tunisia":545,"Morocco":2341,"Bahrain":646,"Oman":1290,"Iraq":4638,"Egypt":2880,"Qatar":2432,"Jordan":2070,"Kuwait":1108},"2025-11":{"Djibouti":209,"Saudi Arabia":4460,"Algeria":1740,"United Arab Emirates":4087,"Libya":768,"Tunisia":666,"Morocco":3125,"Bahrain":383,"Oman":856,"Iraq":3798,"Egypt":2336,"Qatar":2629,"Jordan":1269,"Kuwait":798},"2025-12":{"Djibouti":217,"Saudi Arabia":3201,"Algeria":1750,"United Arab Emirates":3940,"Libya":775,"Tunisia":671,"Morocco":3420,"Iraq":3811,"Egypt":2323,"Qatar":2247,"Jordan":583,"Kuwait":412},"2026-01":{"Djibouti":195,"Algeria":1741,"Libya":437,"Tunisia":289,"Saudi Arabia":1219,"United Arab Emirates":3463,"Morocco":1424,"Iraq":3670,"Qatar":1087,"Jordan":511,"Egypt":1558,"Iran":226},"2026-02":{"Iraq":4256,"Algeria":2231,"Libya":333,"Saudi Arabia":2051,"United Arab Emirates":3840,"Qatar":1216,"Jordan":1963,"Egypt":2068,"Morocco":1217,"Kuwait":780,"Iran":746},"2026-03":{"Qatar":2754,"Iraq":3951,"Saudi Arabia":1883,"Algeria":1700,"Libya":1176,"United Arab Emirates":3234,"Morocco":2400,"Jordan":1738,"Egypt":2284,"Kuwait":576,"Iran":568,"Oman":238},"2026-04":{"Qatar":3815,"Iraq":4351,"Saudi Arabia":3137,"Algeria":1980,"United Arab Emirates":3397,"Libya":554,"Morocco":1860,"Jordan":1633,"Egypt":2702,"Palestine":476,"Oman":540,"Syria":478,"Kuwait":503},"2026-05":{"Qatar":3835,"Iraq":4711,"Saudi Arabia":4115,"Algeria":2266,"United Arab Emirates":3375,"Libya":664,"Morocco":2226,"Jordan":2017,"Egypt":3084,"Syria":130,"Kuwait":894,"Palestine":871,"Oman":603},"2026-06":{"Qatar":2999,"Algeria":2167,"Libya":623,"Saudi Arabia":3697,"Morocco":1988,"Iraq":3629,"Jordan":2156,"Kuwait":1114,"United Arab Emirates":2108,"Egypt":3759,"Syria":813,"Palestine":935,"Oman":413},"2026-07":{"Jordan":3407,"Kuwait":1200,"Libya":773,"Morocco":3258,"Saudi Arabia":5829,"Algeria":4139,"Egypt":7113,"Iraq":7509,"United Arab Emirates":2740,"Qatar":2311,"Syria":453,"Palestine":1859,"Oman":180},"2026-08":{"Morocco":3674,"Egypt":4975,"Iraq":8855,"Saudi Arabia":5512,"Jordan":2951,"Algeria":2732,"United Arab Emirates":2939,"Qatar":3609,"Palestine":219,"Syria":176}};  /* paid-ads spend by month x country, USD (FB USD + Google CAD converted) */
+const MKTC = Object.entries(MKTC_M).flatMap(([mk,o])=>Object.entries(o).map(([c,amt])=>({mk,c,amt})));
 const MKT_FROM = '2026-03';
 const OFF_SHORT = {'Dubai':'Dubai','WMT Alexandria':'Alexandria','WeGolden Egypt':'WeGolden'};
 
@@ -556,32 +558,36 @@ function hbars(el, items, colorFn, labelFn, fmtFn){
    labelled on every row, so identity never rests on colour alone. */
 function hbars2(el, items, primary){
   el.innerHTML='';
-  const W=520, rowH=46, L=128, R=96, H=items.length*rowH+12;
+  const W=520, rowH=60, L=128, R=96, H=items.length*rowH+12;
   const plot=W-L-R;
-  const mx=niceMax(Math.max(...items.flatMap(d=>[d.rev,d.pay]),1));
+  const mx=niceMax(Math.max(...items.flatMap(d=>[d.rev,d.pay,d.mkt||0]),1));
   const s=svgEl(W,H);
-  const order = primary==='pay' ? [['pay','--out'],['rev','--in']] : [['rev','--in'],['pay','--out']];
+  const order = primary==='pay' ? [['pay','--out'],['rev','--in'],['mkt','--s3']] : [['rev','--in'],['pay','--out'],['mkt','--s3']];
   items.forEach((d,i)=>{
     const yy=6+i*rowH;
     text(s,L-8,yy+rowH/2+4,d.label.length>17?d.label.slice(0,16)+'\u2026':d.label,'end');
     order.forEach(([k,tok],j)=>{
-      const bw=Math.max(d[k]/mx*plot, d[k]>0?3:0);
+      const v=d[k]||0, bw=Math.max(v/mx*plot, v>0?3:0);
       if(bw<=0) return;
-      const b=rect(s,L,yy+9+j*15,bw,12,css(tok),0);
+      const b=rect(s,L,yy+8+j*15,bw,12,css(tok),0);
       b.setAttribute('rx','4');
     });
     const pv=primary==='pay'?d.pay:d.rev;
-    text(s,W-R+8,yy+20,fmtK(pv),'start','dl');
+    text(s,W-R+8,yy+18,fmtK(pv),'start','dl');
     const hasPay=d.pay>0, r=d.rev>0&&hasPay?(d.pay/d.rev*100):null;
-    const rt=text(s,W-R+8,yy+34,r===null?'ratio n/a':`${r.toFixed(0)}% out`,'start','dl');
+    const rt=text(s,W-R+8,yy+32,r===null?'ratio n/a':`${r.toFixed(0)}% out`,'start','dl');
     rt.setAttribute('opacity','.72');
+    const mk=d.mkt||0;
+    const mt=text(s,W-R+8,yy+46,mk>0?`ads ${fmtK(mk)}`:'no ads','start','dl');
+    mt.setAttribute('opacity','.72');
     const hv=document.createElementNS(s.namespaceURI,'rect');
     hv.setAttribute('x',0);hv.setAttribute('y',yy);hv.setAttribute('width',W);hv.setAttribute('height',rowH);
     hv.setAttribute('fill','transparent');
     hv.addEventListener('mousemove',e=>showTip(
-      `<b>${d.label}</b><br>Revenue: <b>${fmt$(d.rev)}</b><br>Payouts: <b>${fmt$(d.pay)}</b>`+
+      `<b>${d.label}</b><br>Revenue: <b>${fmt$(d.rev)}</b><br>Payouts: <b>${fmt$(d.pay)}</b><br>Marketing: <b>${fmt$(mk)}</b>`+
       (r===null?'<br><span style="opacity:.7">no payouts recorded</span>'
-               :`<br>Paid out: <b>${r.toFixed(1)}%</b><br>Kept: <b>${fmt$(d.rev-d.pay)}</b> (${(100-r).toFixed(1)}%)`),
+               :`<br>Paid out: <b>${r.toFixed(1)}%</b>`)+
+      `<br>After payouts &amp; ads: <b>${fmt$(d.rev-d.pay-mk)}</b>`+(d.rev>0?` (${((d.rev-d.pay-mk)/d.rev*100).toFixed(1)}%)`:''),
       e.clientX,e.clientY));
     hv.addEventListener('mouseleave',hideTip); s.appendChild(hv);
   });
@@ -590,8 +596,10 @@ function hbars2(el, items, primary){
 /* revenue + payouts per country for the selected period, merged on country name */
 function countryPairs(){
   const m={};
-  revInRange().forEach(r=>{ m[r.c]=m[r.c]||{label:r.c,rev:0,pay:0}; m[r.c].rev+=r.amt; });
-  payInRange().forEach(r=>{ m[r.c]=m[r.c]||{label:r.c,rev:0,pay:0}; m[r.c].pay+=r.amt; });
+  const g=c=>(m[c]=m[c]||{label:c,rev:0,pay:0,mkt:0});
+  revInRange().forEach(r=>{ g(r.c).rev+=r.amt; });
+  payInRange().forEach(r=>{ g(r.c).pay+=r.amt; });
+  mktInRange().forEach(r=>{ g(r.c).mkt+=r.amt; });
   return Object.values(m);
 }
 
@@ -696,6 +704,7 @@ function chartProf(el, months, rev, pay, cost){
 
 /* ---------- operation profit view ---------- */
 function payInRange(){ const ms=new Set(monthsInRange()); return PAY.filter(r=>ms.has(r.mk)); }
+function mktInRange(){ const ms=new Set(monthsInRange()); return MKTC.filter(r=>ms.has(r.mk)); }
 function renderProfit(){
   const wg = state.product==='wg';
   const offs = new Set(PRODUCT_OFFICES[state.product]);
