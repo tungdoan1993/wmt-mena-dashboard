@@ -6,8 +6,8 @@
 <meta name="robots" content="noindex,nofollow">
 <title>WeMasterTrade · Expenses — MENA Dashboard</title>
 <link rel="preload" href="assets/fonts/figtree-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="assets/css/dashboard.css">
-<script src="assets/js/loader.js" defer></script>
+<link rel="stylesheet" href="assets/css/dashboard.css?v=2026-09-28-markets">
+<script src="assets/js/loader.js?v=2026-09-28-markets" defer></script>
 
 </head>
 <body>
@@ -29,8 +29,10 @@
   <div class="bar">
     <div class="tabs">
       <button class="tab on" data-tab="exp" onclick="setTab('exp')">Expenses</button>
-      <button class="tab" data-tab="rev" onclick="setTab('rev')">MENA Revenue</button>
       <button class="tab" data-tab="prof" onclick="setTab('prof')">Operation Profit</button>
+      <div class="markets" id="markets" role="group" aria-label="Revenue by market">
+        <span class="mlbl">Markets</span><div class="mbtns" id="marketBtns"></div>
+      </div>
     </div>
     <div class="filters">
       <button class="chip on" data-office="Dubai"><span class="dot" style="background:var(--o-dubai)"></span>Dubai</button>
@@ -91,14 +93,16 @@
 
 <!-- ══════════════ REVENUE ══════════════ -->
 <div class="view" id="view-rev">
+  <div class="card full empty" id="revEmpty" style="display:none"><h2>No data yet</h2><div class="note" id="revEmptyTxt"></div></div>
+  <div id="revBody">
   <div class="kpis">
-    <div class="kpi hero green"><div class="lbl">WMT MENA revenue</div><div class="val" id="rTot">—</div><div class="sub2" id="rTotSub"></div></div>
+    <div class="kpi hero green"><div class="lbl" id="rTotLbl">WMT MENA revenue</div><div class="val" id="rTot">—</div><div class="sub2" id="rTotSub"></div></div>
     <div class="kpi"><div class="lbl">Deals won</div><div class="val" id="rN">—</div><div class="sub2">closed-won deals</div></div>
     <div class="kpi"><div class="lbl">Avg deal size</div><div class="val" id="rAvg">—</div><div class="sub2">revenue ÷ deals</div></div>
     <div class="kpi"><div class="lbl">Best month</div><div class="val" id="rBest">—</div><div class="sub2" id="rBestSub"></div></div>
   </div>
 
-  <div class="sec"><h2>Revenue over time</h2><span class="note">Closed-won deal amounts by create date · HubSpot “Total MENA Revenue” + internal CRM (Syria &amp; Iran)</span></div>
+  <div class="sec"><h2>Revenue over time</h2><span class="note" id="revNote">Closed-won deal amounts by create date · HubSpot “Total MENA Revenue” + internal CRM (Syria &amp; Iran)</span></div>
   <div class="card full"><div id="chRevMonthly"></div></div>
 
   <div class="sec"><h2>Where revenue comes from</h2><span class="note">All countries · selected period</span></div>
@@ -115,12 +119,15 @@
       <div id="chRevDeals"></div>
     </div>
   </div>
+  </div><!-- /revBody -->
 </div><!-- /view-rev -->
 
 <!-- ══════════════ OPERATION PROFIT ══════════════ -->
 <div class="view" id="view-prof">
+  <div class="card full empty" id="profEmpty" style="display:none"><h2>No data yet</h2><div class="note" id="profEmptyTxt"></div></div>
+  <div id="profBody">
   <div class="kpis">
-    <div class="kpi hero"><div class="lbl">Operation profit</div><div class="val" id="pNet">—</div><div class="sub2" id="pNetSub"></div></div>
+    <div class="kpi hero"><div class="lbl" id="pNetLbl">Operation profit</div><div class="val" id="pNet">—</div><div class="sub2" id="pNetSub"></div></div>
     <div class="kpi"><div class="lbl">Revenue</div><div class="val in" id="pRev">—</div><div class="sub2" id="pRevSub">WMT MENA (HubSpot)</div></div>
     <div class="kpi" id="pPayCard"><div class="lbl">Customer payouts</div><div class="val out" id="pPay">—</div><div class="sub2" id="pPaySub">trader + partner (IP)</div></div>
     <div class="kpi"><div class="lbl">Costs</div><div class="val third" id="pCost">—</div><div class="sub2" id="pCostSub">office expenses</div></div>
@@ -156,6 +163,7 @@
       </table>
     </div>
   </div>
+  </div><!-- /profBody -->
 </div><!-- /view-prof -->
 
 <!-- ══════════════ AUDIT TRAIL ══════════════ -->
@@ -194,6 +202,7 @@
   <div><b>Payout sources.</b> HubSpot “MENA Trader Payout” and “MENA IP Payout” (approval amount to withdraw, by ticket create date). Operation profit = revenue − payouts − costs − marketing. $9,166 of payouts dated before Aug 2025 fall outside the period and are excluded; one Aug ’25 Iraq trader ticket has no amount and is skipped.</div>
   <div><b>Marketing.</b> Facebook and Google paid-ads spend attributed to MENA, from the internal Paid Ads report. It is <b>paid centrally by HQ</b>, so it never passes through the Dubai or Alexandria accounts — it is deliberately absent from the expense tabs and from the bank reconciliation, and appears only as its own line here. Tracked from March 2026, figures in USD as reported at source (the Google account bills in CAD and the report converts it; no further conversion is applied here). Facebook / Google by month: Mar $6,471 / $15,866 · Apr $8,659 / $16,635 · May $12,929 / $15,751 · Jun $14,920 / $11,419 · Jul $21,450 / $18,673. Paused campaigns are included. Months before March show “—”. MENA attribution in the source report is campaign-name based and flagged there as partial coverage, so the figure is more likely to understate than overstate.</div>
   <div><b>FX.</b> 1 USD = 3.6725 AED (peg) · Egypt rows up to Feb 2026: Alexandria EGP at 52.93, WeGolden EGP at 45.11 per report. From Mar 2026 every Egypt row is booked in USD at the actual rate of the transfer that funded it (EGP amount and rate in the notes).</div>
+  <div><b>Markets.</b> Revenue, customer payouts and paid-ads are split by the deal's country: Pakistan, Ethiopia and Nigeria each own their country; MENA is every other country. Office costs count toward MENA only (Dubai + Alexandria) until an office is assigned to another market. Expenses are shown per office, not per market.</div>
   <div><b>Method.</b> Money in = income + funding transfers received; money out = expenses. Internal transfers between own accounts are excluded from totals and charts (still visible in the source files). WeGolden setup costs (undated) sit in Feb 2026.</div>
   <div><b>Source files.</b> Listed with links in the Audit trail panel above.</div>
 </footer>
