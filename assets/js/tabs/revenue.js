@@ -1,4 +1,4 @@
-/* MENA Revenue tab.
+/* Revenue tab — one view per market (MENA, Pakistan, Ethiopia, Nigeria …, see manifest markets).
    Part of the MENA dashboard. Loaded in order by assets/js/loader.js. */
 
 /* revenue + payouts per country for the selected period, merged on country name */
@@ -12,13 +12,22 @@ function countryPairs(){
 }
 
 /* ---------- revenue view ---------- */
-function revInRange(){ const ms=new Set(monthsInRange()); return REV.filter(r=>ms.has(r.mk)); }
+const mREV = () => REV.filter(inMarket);                       /* selected market, all time */
+function revInRange(){ const ms=new Set(monthsInRange()); return REV.filter(r=>ms.has(r.mk)&&inMarket(r)); }
 function renderRevenue(){
+  const M=MARKET_BY_ID[state.market], all=mREV();
+  el('rTotLbl').textContent=`WMT ${M.label} revenue`;
+  el('revNote').textContent='Closed-won deal amounts by create date · '+(M.source||'no source connected yet');
+  el('revEmpty').style.display = all.length?'none':'';
+  el('revBody').style.display = all.length?'':'none';
+  el('revEmptyTxt').innerHTML =
+    `No ${M.label} revenue has been loaded yet. The view fills in automatically once rows for `+
+    `${(M.countries==='*'?'these countries':M.countries.join(', '))} are added to <code>data/${M.file||'revenue/…'}</code>.`;
   const rows=revInRange();
   const tot=rows.reduce((a,r)=>a+r.amt,0), n=rows.reduce((a,r)=>a+r.n,0);
-  const ms=monthsInRange().filter(mk=>REV.some(r=>r.mk===mk));
+  const ms=monthsInRange().filter(mk=>all.some(r=>r.mk===mk));
   document.getElementById('rTot').textContent=fmt$(tot);
-  document.getElementById('rTotSub').textContent= ms.length? (ms.length===1?monLbl(ms[0]):`${monLbl(ms[0])} – ${monLbl(ms[ms.length-1])}`):'no data in range';
+  document.getElementById('rTotSub').textContent= spanLbl(ms);
   document.getElementById('rN').textContent=n.toLocaleString();
   document.getElementById('rAvg').textContent=n?fmt$(tot/n):'–';
   const perM=ms.map(mk=>rows.filter(r=>r.mk===mk).reduce((a,r)=>a+r.amt,0));
