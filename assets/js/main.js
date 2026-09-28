@@ -21,14 +21,15 @@ document.getElementById('range').addEventListener('change',e=>{state.range=e.tar
 function applyRange(r){ state.range=r; state.rows=50; const sel=document.getElementById('range'); if(sel.value!==r) sel.value=r; }
 document.getElementById('q').addEventListener('input',e=>{state.q=e.target.value;state.rows=50;renderTable(filtered());});
 
-/* boot: honour /wmt/ or /wg/ plus the #tab in the URL */
-{ const hp = hashParts(); state.tab = hp.tab || 'exp'; if(hp.range) applyRange(hp.range); }
+/* boot: honour /wmt/ or /wg/ plus the #tab, #market and period in the URL */
+{ const hp = hashParts(); state.tab = hp.tab || 'exp'; if(hp.market) state.market = hp.market; if(hp.range) applyRange(hp.range); }
 setProduct(productFromPath() || 'wmt');
 window.addEventListener('hashchange',()=>{
   const hp = hashParts();
   let changed=false;
   if(hp.range && hp.range!==state.range){ applyRange(hp.range); changed=true; }
+  if(hp.market && hp.market!==state.market){ state.market=hp.market; changed=true; }
   if(hp.tab && hp.tab!==state.tab && !(state.product==='wg' && hp.tab==='rev')) setTab(hp.tab);
-  else if(changed){ syncURL(); render(); }
+  else if(changed){ paintMarkets(); syncURL(); render(); }
 });
 render();

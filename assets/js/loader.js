@@ -4,6 +4,7 @@
    3. loads the app scripts in order (core -> charts -> tabs -> main)
    Paths resolve against the page, so the /wmt/ and /wg/ stubs add <base href="../">. */
 (function () {
+  var CODE = '2026-09-28-markets';   /* bump on every code/CSS change so browsers refetch; keep in step with index.html */
   var APP = ['assets/js/core.js', 'assets/js/charts.js', 'assets/js/tabs/expenses.js',
              'assets/js/tabs/revenue.js', 'assets/js/tabs/profit.js', 'assets/js/main.js'];
   var get = function (f) {
@@ -29,11 +30,11 @@
         DATA: [].concat.apply([], d[0]), REV: [].concat.apply([], d[1]).sort(function (a, b) {   // one ordered list: month, then country
           return a.mk < b.mk ? -1 : a.mk > b.mk ? 1 : a.c < b.c ? -1 : a.c > b.c ? 1 : 0; }),
         PAY: d[2],
-        RATES: m.rates, MKT: d[3].total, MKTC_M: d[3].byCountry, MKT_FROM: d[3].from
+        RATES: m.rates, MARKETS: m.markets, MKT: d[3].total, MKTC_M: d[3].byCountry, MKT_FROM: d[3].from
       };
       var a = document.getElementById('asof'); if (a) a.textContent = m.asof;
       return new Promise(function (ok, ko) {
-        var v = encodeURIComponent(m.asof), n = 0;
+        var v = encodeURIComponent(m.asof + '|' + CODE), n = 0;
         APP.forEach(function (src) {
           var s = document.createElement('script');
           s.src = src + '?v=' + v; s.async = false;          // async=false keeps execution order
