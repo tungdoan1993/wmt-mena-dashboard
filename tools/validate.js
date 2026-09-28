@@ -23,6 +23,17 @@ for (const { f, rows } of cur.exp) {
   });
 }
 const hub = cur.rev['revenue/hubspot.json'] || [], crm = cur.rev['revenue/crm-syria-iran.json'] || [];
+// markets: each market file may only hold its own countries; no country may sit in two revenue files
+const markets = cur.m.markets || [];
+const claimed = {}; markets.forEach(mk => Array.isArray(mk.countries) && mk.countries.forEach(c => claimed[c] = mk));
+for (const mk of markets) if (Array.isArray(mk.countries) && mk.file) {
+  (cur.rev[mk.file] || []).forEach((r, i) => { if (!mk.countries.includes(r.c)) errs.push(`${mk.file} row ${i}: ${r.c} is not a ${mk.label} country`); });
+  if (!cur.m.revenue.includes(mk.file)) errs.push(`manifest.revenue is missing ${mk.file}`);
+}
+const seenIn = {};
+for (const [f, rows] of Object.entries(cur.rev)) rows.forEach(r => { (seenIn[r.c] = seenIn[r.c] || new Set()).add(f); });
+for (const [c, fs] of Object.entries(seenIn)) if (fs.size > 1) errs.push(`${c} appears in ${[...fs].join(' and ')} — double counting`);
+for (const [c, mk] of Object.entries(claimed)) if (hub.some(r => r.c === c)) errs.push(`hubspot.json contains ${c} rows — they belong in ${mk.file}`);
 if (hub.some(r => r.c === 'Syria' || r.c === 'Iran')) errs.push('hubspot.json contains Syria/Iran rows — those belong only in crm-syria-iran.json');
 if (!crm.length) errs.push('crm-syria-iran.json is empty — Syria/Iran revenue would disappear');
 const sum = (a, key) => a.reduce((o, r) => (o[r[key]] = (o[r[key]] || 0) + r.amt, o), {});
