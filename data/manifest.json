@@ -22,8 +22,58 @@
   ],
   "revenue": [
     "revenue/hubspot.json",
-    "revenue/crm-syria-iran.json"
+    "revenue/crm-syria-iran.json",
+    "revenue/pakistan.json",
+    "revenue/ethiopia.json",
+    "revenue/nigeria.json"
   ],
   "payouts": "payouts.json",
-  "marketing": "marketing.json"
+  "marketing": "marketing.json",
+  "markets": [
+    {
+      "id": "mena",
+      "label": "MENA",
+      "slug": "mena",
+      "countries": "*",
+      "offices": [
+        "Dubai",
+        "WMT Alexandria"
+      ],
+      "file": "revenue/hubspot.json",
+      "source": "HubSpot “Total MENA Revenue” + internal CRM (Syria & Iran)"
+    },
+    {
+      "id": "pk",
+      "label": "Pakistan",
+      "short": "PK",
+      "slug": "pakistan",
+      "countries": [
+        "Pakistan"
+      ],
+      "offices": [],
+      "file": "revenue/pakistan.json"
+    },
+    {
+      "id": "et",
+      "label": "Ethiopia",
+      "short": "ET",
+      "slug": "ethiopia",
+      "countries": [
+        "Ethiopia"
+      ],
+      "offices": [],
+      "file": "revenue/ethiopia.json"
+    },
+    {
+      "id": "ng",
+      "label": "Nigeria",
+      "short": "NG",
+      "slug": "nigeria",
+      "countries": [
+        "Nigeria"
+      ],
+      "offices": [],
+      "file": "revenue/nigeria.json"
+    }
+  ]
 }
