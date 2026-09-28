@@ -67,6 +67,20 @@ h1{font-size:38px;margin:4px 0 0}
   padding:8px 18px;border-radius:999px}
 .tab:hover{background:rgba(32,30,29,.06)}
 .tab.on{background:var(--color-bg);color:var(--color-text);box-shadow:var(--shadow-sm)}
+.markets{display:inline-flex;align-items:center;gap:2px;margin-left:var(--space-2);padding:3px;
+  border-radius:999px;background:var(--color-accent-100);border:1px solid var(--color-accent-300)}
+.mlbl{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--color-accent-700);padding:0 8px 0 12px}
+.mbtns{display:flex;gap:2px}
+.mkt{display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-family:var(--font-heading);
+  font-weight:400;font-size:14px;color:var(--color-accent-800);background:transparent;border:0;
+  padding:7px 15px;border-radius:999px;transition:background .12s,color .12s}
+.mkt:hover{background:var(--color-accent-200)}
+.mkt.on{background:var(--color-accent);color:var(--color-bg)}
+.mkt.cur{background:var(--color-bg);box-shadow:inset 0 0 0 1.5px var(--color-accent)}
+.mkt .short{display:none}
+.card.empty{text-align:center;padding:var(--space-8) var(--space-6)}
+.card.empty h2{margin:0 0 var(--space-2)}
+.card.empty code{font-size:12px;background:var(--color-neutral-100);padding:1px 6px;border-radius:6px}
 .filters{display:flex;gap:var(--space-2);align-items:center;flex-wrap:wrap;padding-right:4px}
 .chip{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-family:var(--font-heading);
   font-weight:400;font-size:13px;color:var(--color-neutral-700);background:transparent;
@@ -153,4 +167,12 @@ footer b{color:var(--color-accent-800)}
   h1{font-size:30px}
   .wrap{padding:0 var(--space-4) 48px}
   .bar{border-radius:var(--radius-lg)}
+  .tabs{width:100%}
+  .markets{margin-left:0;width:100%}
+  .mbtns{flex:1}
+  .mkt{flex:1;padding:7px 6px}
+}
+@media(max-width:520px){
+  .mkt .full{display:none}
+  .mkt .short{display:inline}
 }
