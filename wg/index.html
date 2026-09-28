@@ -6,13 +6,11 @@
 </head><body>
 <p id="s">Loading dashboard&hellip;</p>
 <script>
-/* Loader stub. The dashboard lives in ONE file at the repo root (../index.html).
-   This page pulls it in without navigating, so the URL stays /wg/ and the
-   dashboard's own routing picks the product up from the path.
-   Do not edit the dashboard here - edit /index.html only. */
+/* Loader stub. Fetches the repo-root index.html and injects <base href="../"> so assets/ and data/ resolve to the root. Do not edit the dashboard here. */
 fetch('../index.html',{cache:'no-cache'})
   .then(function(r){ if(!r.ok) throw new Error(r.status); return r.text(); })
-  .then(function(t){ document.open(); document.write(t); document.close(); })
+  .then(function(t){ t=t.replace(/<head>/i,'<head><base href="../">');
+    document.open(); document.write(t); document.close(); })
   .catch(function(e){
     document.getElementById('s').innerHTML =
       'Could not load the dashboard (' + e.message + '). ' +
