@@ -3,18 +3,18 @@
  "total": {
   "2025-08": 2208,
   "2025-09": 8283,
-  "2025-10": 29922,
+  "2025-10": 29923,
   "2025-11": 29196,
-  "2025-12": 26848,
-  "2026-01": 19140,
-  "2026-02": 24681,
-  "2026-03": 26296,
-  "2026-04": 29309,
-  "2026-05": 38635,
-  "2026-06": 33475,
-  "2026-07": 50873,
-  "2026-08": 41408,
-  "2026-09": 3519
+  "2025-12": 26795,
+  "2026-01": 19072,
+  "2026-02": 24592,
+  "2026-03": 26258,
+  "2026-04": 29291,
+  "2026-05": 38602,
+  "2026-06": 33444,
+  "2026-07": 50804,
+  "2026-08": 41530,
+  "2026-09": 3830
  },
  "byCountry": {
   "2025-08": {
@@ -51,7 +51,7 @@
    "Qatar": 2432,
    "Jordan": 2070,
    "Kuwait": 1108,
-   "Pakistan": 225
+   "Pakistan": 226
   },
   "2025-11": {
    "Djibouti": 209,
@@ -84,8 +84,8 @@
    "Qatar": 2247,
    "Jordan": 583,
    "Kuwait": 412,
-   "Pakistan": 2180,
-   "Nigeria": 1319
+   "Pakistan": 2181,
+   "Nigeria": 1265
   },
   "2026-01": {
    "Djibouti": 195,
@@ -100,8 +100,8 @@
    "Jordan": 511,
    "Egypt": 1558,
    "Iran": 226,
-   "Pakistan": 2233,
-   "Nigeria": 1085
+   "Pakistan": 2229,
+   "Nigeria": 1021
   },
   "2026-02": {
    "Iraq": 4256,
@@ -115,8 +115,8 @@
    "Morocco": 1217,
    "Kuwait": 780,
    "Iran": 746,
-   "Pakistan": 2344,
-   "Nigeria": 1637
+   "Pakistan": 2345,
+   "Nigeria": 1547
   },
   "2026-03": {
    "Qatar": 2754,
@@ -131,8 +131,8 @@
    "Kuwait": 576,
    "Iran": 568,
    "Oman": 238,
-   "Pakistan": 2331,
-   "Nigeria": 1462
+   "Pakistan": 2330,
+   "Nigeria": 1425
   },
   "2026-04": {
    "Qatar": 3815,
@@ -148,9 +148,9 @@
    "Oman": 540,
    "Syria": 478,
    "Kuwait": 503,
-   "Pakistan": 2430,
-   "Nigeria": 1192,
-   "Ethiopia": 262
+   "Pakistan": 2417,
+   "Nigeria": 1186,
+   "Ethiopia": 263
   },
   "2026-05": {
    "Qatar": 3835,
@@ -166,9 +166,9 @@
    "Kuwait": 894,
    "Palestine": 871,
    "Oman": 603,
-   "Pakistan": 4839,
-   "Nigeria": 2590,
-   "Ethiopia": 2415
+   "Pakistan": 4824,
+   "Nigeria": 2574,
+   "Ethiopia": 2413
   },
   "2026-06": {
    "Qatar": 2999,
@@ -184,9 +184,9 @@
    "Syria": 813,
    "Palestine": 935,
    "Oman": 413,
-   "Pakistan": 3813,
-   "Nigeria": 1955,
-   "Ethiopia": 1306
+   "Pakistan": 3803,
+   "Nigeria": 1945,
+   "Ethiopia": 1295
   },
   "2026-07": {
    "Jordan": 3407,
@@ -202,9 +202,9 @@
    "Syria": 453,
    "Palestine": 1859,
    "Oman": 180,
-   "Pakistan": 5848,
-   "Nigeria": 2935,
-   "Ethiopia": 1319
+   "Pakistan": 5856,
+   "Nigeria": 2849,
+   "Ethiopia": 1328
   },
   "2026-08": {
    "Morocco": 3674,
@@ -217,14 +217,14 @@
    "Qatar": 3609,
    "Palestine": 219,
    "Syria": 176,
-   "Pakistan": 3048,
-   "Nigeria": 2154,
-   "Ethiopia": 565
+   "Pakistan": 3159,
+   "Nigeria": 2164,
+   "Ethiopia": 566
   },
   "2026-09": {
-   "Pakistan": 2051,
-   "Nigeria": 1082,
-   "Ethiopia": 386
+   "Pakistan": 2140,
+   "Nigeria": 1264,
+   "Ethiopia": 426
   }
  }
 }
