@@ -307,9 +307,14 @@
 {"mk":"2026-09","c":"Ethiopia","kind":"Partner (IP)","amt":375.34,"n":4},
 {"mk":"2026-09","c":"Yemen","kind":"Partner (IP)","amt":265.51,"n":3},
 {"mk":"2026-09","c":"Nigeria","kind":"Partner (IP)","amt":155.94,"n":2},
+{"mk":"2026-10","c":"Iraq","kind":"Trader","amt":2633.74,"n":4},
 {"mk":"2026-10","c":"Pakistan","kind":"Trader","amt":1560.26,"n":1},
-{"mk":"2026-10","c":"Iraq","kind":"Trader","amt":1038.9,"n":1},
 {"mk":"2026-10","c":"Nigeria","kind":"Trader","amt":630.28,"n":1},
-{"mk":"2026-10","c":"Egypt","kind":"Trader","amt":185.32,"n":1},
-{"mk":"2026-10","c":"Iran","kind":"Partner (IP)","amt":108.57,"n":1}
+{"mk":"2026-10","c":"Yemen","kind":"Trader","amt":503.36,"n":1},
+{"mk":"2026-10","c":"Egypt","kind":"Trader","amt":395.78,"n":2},
+{"mk":"2026-10","c":"Kuwait","kind":"Partner (IP)","amt":3300.98,"n":1},
+{"mk":"2026-10","c":"Egypt","kind":"Partner (IP)","amt":930.0,"n":1},
+{"mk":"2026-10","c":"United Arab Emirates","kind":"Partner (IP)","amt":181.0,"n":1},
+{"mk":"2026-10","c":"Iran","kind":"Partner (IP)","amt":108.57,"n":1},
+{"mk":"2026-10","c":"Ethiopia","kind":"Partner (IP)","amt":79.63,"n":1}
 ]
