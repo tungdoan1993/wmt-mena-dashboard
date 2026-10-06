@@ -14,7 +14,7 @@
   "2026-06": 33444,
   "2026-07": 50804,
   "2026-08": 41530,
-  "2026-09": 3911
+  "2026-09": 45144
  },
  "byCountry": {
   "2025-08": {
@@ -222,6 +222,17 @@
    "Ethiopia": 566
   },
   "2026-09": {
+   "Iraq": 9287,
+   "Egypt": 5804,
+   "Saudi Arabia": 4301,
+   "Morocco": 4191,
+   "Algeria": 4150,
+   "Jordan": 3310,
+   "United Arab Emirates": 3104,
+   "Syria": 2549,
+   "Qatar": 1933,
+   "Palestine": 1792,
+   "Kuwait": 812,
    "Pakistan": 2187,
    "Nigeria": 1288,
    "Ethiopia": 436
