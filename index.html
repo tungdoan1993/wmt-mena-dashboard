@@ -6,8 +6,8 @@
 <meta name="robots" content="noindex,nofollow">
 <title>WeMasterTrade · Expenses — MENA Dashboard</title>
 <link rel="preload" href="assets/fonts/figtree-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="assets/css/dashboard.css?v=2026-11-22-all">
-<script src="assets/js/loader.js?v=2026-11-22-all" defer></script>
+<link rel="stylesheet" href="assets/css/dashboard.css?v=2026-11-22-responsive">
+<script src="assets/js/loader.js?v=2026-11-22-responsive" defer></script>
 
 </head>
 <body>
@@ -82,7 +82,7 @@
   <div class="card full">
     <input type="search" id="q" placeholder="Search description, category, notes…">
     <div class="scroll" style="margin-top:var(--space-3)">
-      <table>
+      <table class="as-cards">
         <thead><tr><th>Date</th><th>Office</th><th>Category</th><th>Description</th><th style="text-align:right">Native</th><th style="text-align:right">USD</th></tr></thead>
         <tbody id="tbody"></tbody>
       </table>
@@ -157,7 +157,7 @@
   <div class="sec"><h2>Monthly P&amp;L</h2><span class="note" id="pnlNote">Operation profit = revenue − payouts − costs − marketing</span></div>
   <div class="card full">
     <div class="scroll">
-      <table>
+      <table class="as-cards">
         <thead><tr><th>Month</th><th style="text-align:right">Revenue</th><th style="text-align:right">Payouts</th><th style="text-align:right">Costs</th><th style="text-align:right" id="thMkt">Marketing</th><th style="text-align:right">Operation profit</th><th style="text-align:right">Margin</th></tr></thead>
         <tbody id="pTbody"></tbody>
       </table>
@@ -171,7 +171,7 @@
 <div class="card full" id="audit">
   <div class="note">Every figure on this dashboard traces back to one of the documents below. Each kind of money has exactly one authority: where a source file and a bank or exchange export disagree, the export governs and the source file is corrected. Links open the document in place and require a signed-in account with permission — access is granted by Martin Doan.</div>
   <div class="scroll">
-    <table>
+    <table class="audit">
       <thead><tr>
         <th style="width:26%">Document</th><th style="width:34%">Authority for</th>
         <th style="width:15%">Maintained by</th><th style="width:9%">Currency</th><th style="width:16%">Open</th>

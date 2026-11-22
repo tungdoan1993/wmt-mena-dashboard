@@ -144,24 +144,25 @@ function renderProfitTable(ms,rev,pay,cost,mkt,open,wg){
   const openOnly=ms.length>0 && open.every(Boolean);
   const tb=document.getElementById('pTbody'); tb.innerHTML='';
   const profitCells=(p, base, withheld)=> withheld
-    ? `<td class="num dim">— (not closed)</td><td class="num dim">— (not closed)</td>`
-    : `<td class="num" style="color:${p>=0?'var(--good)':'var(--bad)'}">${fmt$(p)}</td>
-       <td class="num">${base?Math.round(p/base*100)+'%':'—'}</td>`;
+    ? `<td class="num dim" data-label="Operation profit">— (not closed)</td><td class="num dim" data-label="Margin">— (not closed)</td>`
+    : `<td class="num" data-label="Operation profit" style="color:${p>=0?'var(--good)':'var(--bad)'}">${fmt$(p)}</td>
+       <td class="num" data-label="Margin">${base?Math.round(p/base*100)+'%':'—'}</td>`;
   ms.forEach((mk,i)=>{
     const o=open[i];
     const p=rev[i]-pay[i]-cost[i]-mkt[i];
     const trw=document.createElement('tr');
     if(o) trw.className='open';
-    trw.innerHTML=`<td>${monLbl(mk)}${o?` <span class="mtd">${mtdLabel(mk)}</span>`:''}</td><td class="num">${fmt$(rev[i])}</td>
-      <td class="num">${wg?'—':fmt$(-pay[i])}</td>
-      <td class="num">${o?'—':fmt$(-cost[i])}</td>
-      <td class="num">${wg||!mkt[i]?'—':fmt$(-mkt[i])}</td>
+    trw.innerHTML=`<td data-label="Month">${monLbl(mk)}${o?` <span class="mtd">${mtdLabel(mk)}</span>`:''}</td>
+      <td class="num" data-label="Revenue">${fmt$(rev[i])}</td>
+      <td class="num" data-label="Payouts">${wg?'—':fmt$(-pay[i])}</td>
+      <td class="num" data-label="Costs">${o?'—':fmt$(-cost[i])}</td>
+      <td class="num" data-label="Marketing">${wg||!mkt[i]?'—':fmt$(-mkt[i])}</td>
       ${profitCells(p, rev[i], o)}`;
     tb.appendChild(trw);
   });
   const tot=document.createElement('tr'); tot.className='tot';
-  tot.innerHTML=`<td>Total</td><td class="num">${fmt$(tr)}</td><td class="num">${wg?'—':fmt$(-tp)}</td>
-    <td class="num">${openOnly?'—':fmt$(-tc)}</td><td class="num">${wg||!tm?'—':fmt$(-tm)}</td>
+  tot.innerHTML=`<td data-label="Month">Total</td><td class="num" data-label="Revenue">${fmt$(tr)}</td><td class="num" data-label="Payouts">${wg?'—':fmt$(-tp)}</td>
+    <td class="num" data-label="Costs">${openOnly?'—':fmt$(-tc)}</td><td class="num" data-label="Marketing">${wg||!tm?'—':fmt$(-tm)}</td>
     ${profitCells(net, trC, openOnly)}`;
   tb.appendChild(tot);
 }

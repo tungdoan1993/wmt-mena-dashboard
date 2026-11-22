@@ -4,7 +4,7 @@
    3. loads the app scripts in order (core -> charts -> tabs -> main)
    Paths resolve against the page, so the /wmt/ and /wg/ stubs add <base href="../">. */
 (function () {
-  var CODE = '2026-11-22-all';   /* bump on every code/CSS change so browsers refetch; keep in step with index.html */
+  var CODE = '2026-11-22-responsive';   /* bump on every code/CSS change so browsers refetch; keep in step with index.html */
   var APP = ['assets/js/core.js', 'assets/js/charts.js', 'assets/js/tabs/expenses.js',
              'assets/js/tabs/revenue.js', 'assets/js/tabs/profit.js', 'assets/js/main.js'];
   var get = function (f) {

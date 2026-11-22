@@ -11,12 +11,12 @@ function renderTable(rows){
   match.slice(0,state.rows).forEach(t=>{
     const tr=document.createElement('tr');
     const u=usd(t);
-    tr.innerHTML=`<td>${t.date||t.mk}</td>
-      <td><span class="pill">${OFF_SHORT[t.office]}</span></td>
-      <td>${t.cat}${isInternal(t)?' <span class="pill">internal</span>':''}</td>
-      <td>${t.desc||''}${t.notes?` <span style="color:var(--muted)">· ${t.notes}</span>`:''}</td>
-      <td class="num ${t.amt>0?'pos':'neg'}">${fmtNat(t)}</td>
-      <td class="num ${t.amt>0?'pos':'neg'}">${fmt$(u)}</td>`;
+    tr.innerHTML=`<td data-label="Date">${t.date||t.mk}</td>
+      <td data-label="Office"><span class="pill">${OFF_SHORT[t.office]}</span></td>
+      <td data-label="Category">${t.cat}${isInternal(t)?' <span class="pill">internal</span>':''}</td>
+      <td data-label="Description">${t.desc||''}${t.notes?` <span style="color:var(--muted)">· ${t.notes}</span>`:''}</td>
+      <td class="num ${t.amt>0?'pos':'neg'}" data-label="Native">${fmtNat(t)}</td>
+      <td class="num ${t.amt>0?'pos':'neg'}" data-label="USD">${fmt$(u)}</td>`;
     tb.appendChild(tr);
   });
   document.getElementById('moreBtn').style.display = match.length>state.rows?'':'none';
@@ -35,11 +35,11 @@ function renderExpenses(){
   const net=tin+tout, kn=document.getElementById('kNet');
   kn.textContent=fmt$(net); kn.style.color=net>=0?'var(--good)':'var(--bad)';
   document.getElementById('kN').textContent=rows.length.toLocaleString();
-  const ms=msAll;
+  const ms=msAll.length ? msAll : monthsInRange().filter(isOpenMonth);
   document.getElementById('kInSub').textContent='income + funding received';
   document.getElementById('kOutSub').textContent='expenses (internal transfers excluded)';
   const rangeMs=monthsInRange();
-  const openRange=rangeMs.length && rangeMs.every(isOpenMonth) && !ms.length;
+  const openRange=rangeMs.length && rangeMs.every(isOpenMonth) && !msAll.length;
   document.getElementById('kNetSub').textContent= openRange ? 'not closed · '+rangeMs.map(mtdLabel).join(', ')
     : !ms.length ? 'no data in range'
     : ms.length===1 ? monLbl(ms[0])
