@@ -10,11 +10,24 @@ function mktInRange(){ const ms=new Set(monthsInRange()); return MKTC.filter(r=>
 /* paid-ads for one month in the selected market. MENA = HQ month total minus spend already
    attributed to the other markets' countries (identical to the total while those are empty). */
 function mktMonth(mk){
+  if(state.market===ALL_ID) return MKT[mk]||0;
   if(state.market===CATCH_ALL){
     const other=MKTC.filter(r=>r.mk===mk&&marketOf(r.c)!==CATCH_ALL).reduce((a,r)=>a+r.amt,0);
     return (MKT[mk]||0)-other;
   }
   return MKTC.filter(r=>r.mk===mk&&inMarket(r)).reduce((a,r)=>a+r.amt,0);
+}
+/* Same month rule each market view already uses. All markets is the union of those,
+   so a payout-only month MENA does not show stays hidden here too. */
+function marketHasMonth(id, mk){
+  const offs=new Set((MARKET_BY_ID[id].offices||[]).filter(o=>PRODUCT_OFFICES.wmt.includes(o)));
+  const inM=r=>marketOf(r.c)===id;
+  const hasRev=REV.some(r=>r.mk===mk&&inM(r));
+  const hasExp=DATA.some(t=>t.mk===mk&&offs.has(t.office));
+  if(id===CATCH_ALL) return hasRev||hasExp;
+  const hasPay=PAY.some(r=>r.mk===mk&&inM(r));
+  const hasMkt=MKTC.some(r=>r.mk===mk&&inM(r)&&r.amt);
+  return hasRev||hasPay||hasMkt||hasExp;
 }
 function renderProfit(){
   const wg = state.product==='wg';
@@ -25,9 +38,9 @@ function renderProfit(){
   const mRev = REV.filter(inMarket), mPay = PAY.filter(inMarket);
   const ms=monthsInRange().filter(mk=> wg
     ? DATA.some(t=>t.mk===mk&&inProd(t))
-    : catchAll
-      ? (mRev.some(r=>r.mk===mk)||DATA.some(t=>t.mk===mk&&inProd(t)))
-      : (mRev.some(r=>r.mk===mk)||mPay.some(r=>r.mk===mk)||mktMonth(mk)>0||DATA.some(t=>t.mk===mk&&inProd(t))));
+    : state.market===ALL_ID
+      ? MARKETS.some(m=>marketHasMonth(m.id, mk))
+      : marketHasMonth(state.market, mk));
   const rev=ms.map(mk=> wg?0:mRev.filter(r=>r.mk===mk).reduce((a,r)=>a+r.amt,0));
   const pay=ms.map(mk=> wg?0:mPay.filter(r=>r.mk===mk).reduce((a,r)=>a+r.amt,0));
   const cost=ms.map(mk=>-DATA.filter(t=>t.mk===mk&&inProd(t)&&t.amt<0&&!isInternal(t)).reduce((a,t)=>a+usd(t),0));
@@ -42,6 +55,7 @@ function renderProfit(){
     `It fills in automatically once ${M.label} rows are added to the data files.`;
   el('pNetLbl').textContent = wg ? 'Operation profit' : `Operation profit · ${M.label}`;
   document.getElementById('pRevSub').textContent = wg?'WeGolden — no revenue yet (build phase)'
+    : state.market===ALL_ID ? 'MENA + Pakistan + Ethiopia + Nigeria'
     : catchAll ? 'WMT MENA (HubSpot report)' : `WMT ${M.label}`;
   document.getElementById('pCostSub').textContent = wg?'WeGolden Egypt office expenses'
     : offList.length ? offList.map(o=>OFF_SHORT[o]).join(' + ')+' office expenses' : `no office assigned to ${M.label} yet`;
@@ -51,7 +65,9 @@ function renderProfit(){
   document.getElementById('chProfTitle').innerHTML = wg?'Revenue against costs':'Revenue against payouts &amp; costs';
   document.getElementById('chProfNote').textContent = wg
     ?'Operation profit = revenue − costs. WeGolden has no revenue yet, so profit equals −costs.'
-    : catchAll
+    : state.market===ALL_ID
+      ?'All markets: MENA (HubSpot + CRM Syria & Iran) + Pakistan + Ethiopia + Nigeria, using the same definitions as each market. Office costs are the offices assigned to those markets. HQ-paid marketing is the full paid-ads total. WeGolden is excluded.'
+      : catchAll
       ?'Chart shows office costs only. HQ-paid marketing is a separate line — see the KPI above and the Monthly P&L. WeGolden is excluded from all WMT figures.'
       :`Chart shows office costs only (none assigned to ${M.label} yet). HQ-paid marketing for ${M.label} countries is a separate line — see the KPI above and the Monthly P&L.`;
   const sum=(arr,pred)=>arr.reduce((a,v,i)=>a+(pred(i)?v:0),0);
@@ -70,7 +86,7 @@ function renderProfit(){
   document.getElementById('pCost').textContent=openOnly?'—':fmt$(-tcC);
   if(openOnly) document.getElementById('pCostSub').textContent='not closed · '+mtdNote;
   else if(openMks.length) document.getElementById('pCostSub').textContent += ' · through '+monLbl(closedMks[closedMks.length-1]);
-  const nMkt=closedMks.filter(mk=>catchAll?MKT[mk]:mktMonth(mk)>0).length;
+  const nMkt=closedMks.filter(mk=>(state.market===ALL_ID||catchAll)?MKT[mk]:mktMonth(mk)>0).length;
   document.getElementById('pMktCard').style.display = wg?'none':'';
   document.getElementById('pMkt').textContent = openOnly||!tmC ? '—' : fmt$(-tmC);
   document.getElementById('pMktSub').textContent = openOnly

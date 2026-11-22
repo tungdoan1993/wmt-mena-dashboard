@@ -34,7 +34,8 @@ function renderRevenue(){
   const perM=ms.map(mk=>rows.filter(r=>r.mk===mk).reduce((a,r)=>a+r.amt,0));
   const bi=perM.indexOf(Math.max(...perM,0));
   document.getElementById('rBest').textContent= ms.length?monLbl(ms[bi]):'–';
-  document.getElementById('rBestSub').textContent= ms.length?fmt$(perM[bi]):'';
+  document.getElementById('rBestSub').textContent= ms.length
+    ? fmt$(perM[bi])+(isOpenMonth(ms[bi])?' · '+mtdLabel(ms[bi]):'') : '';
   chartBars(document.getElementById('chRevMonthly'),ms,perM,css('--in'),
     (mk,i)=>`<b>${monLbl(mk)}</b>${isOpenMonth(mk)?' · '+mtdLabel(mk):''}<br>Revenue: <b>${fmt$(perM[i])}</b><br>Deals: <b>${rows.filter(r=>r.mk===mk).reduce((a,r)=>a+r.n,0).toLocaleString()}</b>`);
   const byC={}, byCn={};
