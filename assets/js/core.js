@@ -49,6 +49,51 @@ const MKTC = Object.entries(MKTC_M).flatMap(([mk,o])=>Object.entries(o).map(([c,
 const MKT_FROM = MENA.MKT_FROM;
 const OFF_SHORT = {'Dubai':'Dubai','WMT Alexandria':'Alexandria','WeGolden Egypt':'WeGolden'};
 
+/* asof is the morning the snapshot was labelled (data/manifest.json). The daily data
+   commits call that window "MTD 1–(asof − 1)": asof "Nov 20, 2026" means figures run
+   through 19 Nov. A month is open when it sits in the ledger era (on or after the
+   first closed expense file) and data/expenses/YYYY-MM.json is not listed. Months
+   before the ledger started are not open — they simply have no expense book. */
+const ASOF = MENA.ASOF || '';
+const EXPENSE_MONTHS = Array.isArray(MENA.EXPENSE_MONTHS) ? MENA.EXPENSE_MONTHS.slice().sort() : [];
+const LEDGER_START = EXPENSE_MONTHS[0] || '';
+const MON_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function asofDate(){
+  const m = /^([A-Z][a-z]{2}) (\d{1,2}), (\d{4})$/.exec(ASOF);
+  if(!m) return null;
+  const mi = MON_NAMES.indexOf(m[1]);
+  if(mi<0) return null;
+  return new Date(Date.UTC(+m[3], mi, +m[2]));
+}
+function dataThrough(){
+  const d = asofDate();
+  if(!d) return null;
+  d.setUTCDate(d.getUTCDate()-1);
+  return d;
+}
+function isOpenMonth(mk){
+  if(!LEDGER_START || !mk || mk < LEDGER_START) return false;
+  return EXPENSE_MONTHS.indexOf(mk) < 0;
+}
+function mtdLabel(mk){
+  const [ys, ms] = String(mk||'').split('-');
+  const y = +ys, mo = +ms;
+  if(!y || !mo) return 'MTD';
+  const thru = dataThrough();
+  let day = new Date(Date.UTC(y, mo, 0)).getUTCDate();
+  if(thru && thru.getUTCFullYear()===y && thru.getUTCMonth()+1===mo) day = thru.getUTCDate();
+  return 'MTD 1–'+String(day).padStart(2,'0')+'/'+String(mo).padStart(2,'0');
+}
+function paintFreshness(){
+  const host = document.getElementById('asofThru');
+  const thru = dataThrough();
+  if(!host || !thru || typeof ALL_MONTHS==='undefined') return;
+  const opens = ALL_MONTHS.filter(isOpenMonth);
+  let extra = ' · through '+thru.getUTCDate()+' '+MON_NAMES[thru.getUTCMonth()];
+  if(opens.length) extra += ' · '+opens.map(mk=>monLbl(mk)+' '+mtdLabel(mk)).join(', ');
+  host.textContent = extra;
+}
+
 /* ---------- state & filtering ---------- */
 const PRODUCT_OFFICES = { wmt:['Dubai','WMT Alexandria'], wg:['WeGolden Egypt'] };
 const state = { product:'wmt', offices:new Set(PRODUCT_OFFICES.wmt), range:'all', q:'', rows:50, tab:'exp', market:CATCH_ALL };
@@ -191,3 +236,4 @@ function showTip(html,x,y){ tip.innerHTML=html; tip.style.display='block';
   tip.style.left=Math.min(x+14,innerWidth-w-8)+'px';
   tip.style.top=Math.max(8,Math.min(y-h-10,innerHeight-h-8))+'px'; }
 function hideTip(){ tip.style.display='none'; }
+paintFreshness();
