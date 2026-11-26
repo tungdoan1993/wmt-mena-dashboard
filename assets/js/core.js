@@ -18,7 +18,14 @@ const CATCH_ALL = (MARKETS.find(m=>m.countries==='*')||MARKETS[0]).id;
 const COUNTRY_MARKET = {};
 MARKETS.forEach(m=>{ if(Array.isArray(m.countries)) m.countries.forEach(c=>{ COUNTRY_MARKET[c]=m.id; }); });
 const marketOf = c => COUNTRY_MARKET[c] || CATCH_ALL;
-const inMarket = r => marketOf(r.c)===state.market;
+/* "All markets" is a view, not a manifest market: it must not claim countries. */
+const ALL_ID = 'all';
+const ALL_MARKET = {
+  id: ALL_ID, label: 'All markets', short: 'All', slug: 'all', countries: '*',
+  offices: [],
+  source: 'HubSpot “Total MENA Revenue” + internal CRM (Syria & Iran) + Pakistan, Ethiopia and Nigeria'
+};
+const inMarket = r => state.market===ALL_ID || marketOf(r.c)===state.market;
 
 /* ---------- helpers ---------- */
 function usd(t){
@@ -160,6 +167,7 @@ function syncURL(){
 }
 function setProduct(p){
   state.product=p; state.offices=new Set(PRODUCT_OFFICES[p]); state.rows=50;
+  if(p==='wg' && state.market===ALL_ID) state.market=CATCH_ALL;
   document.querySelectorAll('.pbtn').forEach(b=>b.classList.toggle('on',b.dataset.product===p));
   document.querySelectorAll('.chip[data-office]').forEach(c=>{
     const mine=PRODUCT_OFFICES[p].includes(c.dataset.office);
@@ -200,13 +208,20 @@ function setMarket(id){
 }
 {
   const box=document.getElementById('marketBtns');
-  if(box) MARKETS.forEach(m=>{
-    const b=document.createElement('button');
-    b.className='mkt'; b.type='button'; b.dataset.market=m.id; b.title=m.label+' revenue';
-    b.innerHTML=`<span class="full">${m.label}</span><span class="short">${m.short||m.label}</span>`;
-    b.addEventListener('click',()=>setMarket(m.id));
-    box.appendChild(b);
-  });
+  if(box){
+    ALL_MARKET.offices = [...new Set(MARKETS.flatMap(m=>m.offices||[]))]
+      .filter(o=>PRODUCT_OFFICES.wmt.includes(o));
+    MARKET_BY_ID[ALL_ID]=ALL_MARKET;
+    MARKET_BY_SLUG[ALL_ID]=ALL_ID;
+    [ALL_MARKET, ...MARKETS].forEach(m=>{
+      const b=document.createElement('button');
+      b.className='mkt'; b.type='button'; b.dataset.market=m.id;
+      b.title = m.id===ALL_ID ? 'All markets, consolidated' : m.label+' revenue';
+      b.innerHTML=`<span class="full">${m.label}</span><span class="short">${m.short||m.label}</span>`;
+      b.addEventListener('click',()=>setMarket(m.id));
+      box.appendChild(b);
+    });
+  }
 }
 function monthsInRange(){
   if(state.range==='all') return ALL_MONTHS;
