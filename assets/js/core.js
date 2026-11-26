@@ -250,5 +250,38 @@ function showTip(html,x,y){ tip.innerHTML=html; tip.style.display='block';
   const w=tip.offsetWidth,h=tip.offsetHeight;
   tip.style.left=Math.min(x+14,innerWidth-w-8)+'px';
   tip.style.top=Math.max(8,Math.min(y-h-10,innerHeight-h-8))+'px'; }
-function hideTip(){ tip.style.display='none'; }
+let tipPinned = false;
+function hideTip(){ tipPinned = false; tip.style.display='none'; }
+/* Mouse moves the tooltip. A tap pins it until the next tap outside the chart,
+   which is the only hover a phone has. */
+function pinTip(html, x, y){ tipPinned = true; showTip(html, x, y); }
+function wireTip(node, htmlFn){
+  node.style.cursor = 'pointer';
+  node.addEventListener('pointermove', e => {
+    if(e.pointerType!=='mouse' || tipPinned) return;
+    showTip(htmlFn(), e.clientX, e.clientY);
+  });
+  node.addEventListener('pointerleave', e => {
+    if(e.pointerType==='mouse' && !tipPinned) hideTip();
+  });
+  node.addEventListener('pointerup', e => {
+    if(e.pointerType==='mouse') return;
+    pinTip(htmlFn(), e.clientX, e.clientY);
+    e.preventDefault();
+    e.stopPropagation();
+  });
+  node.addEventListener('touchend', e => {
+    const t = e.changedTouches && e.changedTouches[0];
+    if(!t) return;
+    pinTip(htmlFn(), t.clientX, t.clientY);
+    e.preventDefault();
+  }, {passive:false});
+}
+function tipInsideChart(target){
+  return target && target.closest && target.closest('svg');
+}
+document.addEventListener('pointerdown', e => {
+  if(!tipPinned || tipInsideChart(e.target)) return;
+  hideTip();
+});
 paintFreshness();
