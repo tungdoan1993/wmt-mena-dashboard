@@ -26,8 +26,9 @@ function renderRevenue(){
   const rows=revInRange();
   const tot=rows.reduce((a,r)=>a+r.amt,0), n=rows.reduce((a,r)=>a+r.n,0);
   const ms=monthsInRange().filter(mk=>all.some(r=>r.mk===mk));
+  const openMs=ms.filter(isOpenMonth);
   document.getElementById('rTot').textContent=fmt$(tot);
-  document.getElementById('rTotSub').textContent= spanLbl(ms);
+  document.getElementById('rTotSub').textContent= spanLbl(ms)+(openMs.length?' · '+openMs.map(mtdLabel).join(', '):'');
   document.getElementById('rN').textContent=n.toLocaleString();
   document.getElementById('rAvg').textContent=n?fmt$(tot/n):'–';
   const perM=ms.map(mk=>rows.filter(r=>r.mk===mk).reduce((a,r)=>a+r.amt,0));
@@ -35,7 +36,7 @@ function renderRevenue(){
   document.getElementById('rBest').textContent= ms.length?monLbl(ms[bi]):'–';
   document.getElementById('rBestSub').textContent= ms.length?fmt$(perM[bi]):'';
   chartBars(document.getElementById('chRevMonthly'),ms,perM,css('--in'),
-    (mk,i)=>`<b>${monLbl(mk)}</b><br>Revenue: <b>${fmt$(perM[i])}</b><br>Deals: <b>${rows.filter(r=>r.mk===mk).reduce((a,r)=>a+r.n,0).toLocaleString()}</b>`);
+    (mk,i)=>`<b>${monLbl(mk)}</b>${isOpenMonth(mk)?' · '+mtdLabel(mk):''}<br>Revenue: <b>${fmt$(perM[i])}</b><br>Deals: <b>${rows.filter(r=>r.mk===mk).reduce((a,r)=>a+r.n,0).toLocaleString()}</b>`);
   const byC={}, byCn={};
   rows.forEach(r=>{byC[r.c]=(byC[r.c]||0)+r.amt; byCn[r.c]=(byCn[r.c]||0)+r.n;});
   hbars2(document.getElementById('chRevCountry'),

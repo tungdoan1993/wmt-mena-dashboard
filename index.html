@@ -6,8 +6,8 @@
 <meta name="robots" content="noindex,nofollow">
 <title>WeMasterTrade · Expenses — MENA Dashboard</title>
 <link rel="preload" href="assets/fonts/figtree-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="assets/css/dashboard.css?v=2026-09-28-markets">
-<script src="assets/js/loader.js?v=2026-09-28-markets" defer></script>
+<link rel="stylesheet" href="assets/css/dashboard.css?v=2026-11-22-mtd">
+<script src="assets/js/loader.js?v=2026-11-22-mtd" defer></script>
 
 </head>
 <body>
@@ -18,7 +18,7 @@
     <div>
       <div class="eyebrow">WeMasterTrade × WeGolden</div>
       <h1>MENA Operations</h1>
-      <div class="text-muted asof">Data as of <b id="asof">…</b> · every figure in USD</div>
+      <div class="text-muted asof"><span class="asof-kicker">Updated</span> Data as of <b id="asof">…</b><span id="asofThru"></span> · every figure in USD</div>
     </div>
     <div class="pswitch">
       <button class="btn btn-secondary pbtn on" data-product="wmt" onclick="setProduct('wmt')">WeMasterTrade</button>
@@ -136,7 +136,7 @@
 
   <div class="sec"><h2 id="chProfTitle">Revenue against payouts &amp; costs</h2><span class="note" id="chProfNote"></span></div>
   <div class="card full">
-    <div class="legend"><span><i style="background:var(--in)"></i>Revenue</span><span id="legPay"><i style="background:var(--out)"></i>Payouts</span><span><i style="background:var(--s3)"></i>Costs</span></div>
+    <div class="legend"><span><i style="background:var(--in)"></i>Revenue</span><span id="legPay"><i style="background:var(--out)"></i>Payouts</span><span><i style="background:var(--s3)"></i>Costs</span><span id="legOpen" style="display:none"><i class="open"></i>Open month (MTD)</span></div>
     <div id="chProf"></div>
   </div>
 

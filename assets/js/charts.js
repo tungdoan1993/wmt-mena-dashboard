@@ -16,6 +16,33 @@ function text(s,x,y,str,anchor,cls){ const t=document.createElementNS(s.namespac
   if(cls)t.setAttribute('class',cls); t.textContent=str; s.appendChild(t); return t; }
 function niceMax(v){ const p=Math.pow(10,Math.floor(Math.log10(v||1)));
   for(const m of [1,2,2.5,5,10]) if(m*p>=v) return m*p; return 10*p; }
+/* Open months are faded and hatched so a bar is not read as a closed month. */
+let hatchN = 0;
+function fillFor(s, color, open){
+  if(!open) return color;
+  const id = 'hatch'+(++hatchN);
+  let defs = s.querySelector('defs');
+  if(!defs){
+    defs = document.createElementNS(s.namespaceURI,'defs');
+    s.insertBefore(defs, s.firstChild);
+  }
+  const pat = document.createElementNS(s.namespaceURI,'pattern');
+  pat.setAttribute('id', id);
+  pat.setAttribute('width','6'); pat.setAttribute('height','6');
+  pat.setAttribute('patternUnits','userSpaceOnUse');
+  pat.setAttribute('patternTransform','rotate(45)');
+  const bg = document.createElementNS(s.namespaceURI,'rect');
+  bg.setAttribute('width','6'); bg.setAttribute('height','6');
+  bg.setAttribute('fill', color); bg.setAttribute('fill-opacity','0.28');
+  const ln = document.createElementNS(s.namespaceURI,'line');
+  ln.setAttribute('x1','0'); ln.setAttribute('y1','0'); ln.setAttribute('x2','0'); ln.setAttribute('y2','6');
+  ln.setAttribute('stroke', color); ln.setAttribute('stroke-width','2');
+  pat.appendChild(bg); pat.appendChild(ln); defs.appendChild(pat);
+  return 'url(#'+id+')';
+}
+function markMonthLabel(node, mk){
+  if(typeof isOpenMonth==='function' && isOpenMonth(mk)) node.setAttribute('class','mtdlab');
+}
 
 function chartMonthly(el, months, inflow, outflow){
   el.innerHTML='';
@@ -116,41 +143,56 @@ function chartBars(el, months, vals, color, tipFn){
   months.forEach((mk,i)=>{
     const x0=L+i*cw, bw=Math.min(44,cw-14);
     const v=Math.abs(vals[i]);
-    rect(s,x0+(cw-bw)/2,y(v),bw,H-B-y(v),color,4);
-    text(s,x0+cw/2,H-B+16,monLbl(mk),'middle');
+    const open = typeof isOpenMonth==='function' && isOpenMonth(mk);
+    rect(s,x0+(cw-bw)/2,y(v),bw,H-B-y(v),fillFor(s,color,open),4);
+    markMonthLabel(text(s,x0+cw/2,H-B+16,monLbl(mk),'middle'), mk);
     const hv=document.createElementNS(s.namespaceURI,'rect');
     hv.setAttribute('x',x0);hv.setAttribute('y',T);hv.setAttribute('width',cw);hv.setAttribute('height',H-T-B);
-    hv.setAttribute('fill','transparent');
+    hv.setAttribute('fill','transparent'); hv.dataset.mk = mk;
     hv.addEventListener('mousemove',e=>showTip(tipFn(mk,i),e.clientX,e.clientY));
     hv.addEventListener('mouseleave',hideTip); s.appendChild(hv);
   });
   el.appendChild(s);
 }
 
-/* ---------- profit chart: revenue bar vs stacked payout+cost bar ---------- */
-function chartProf(el, months, rev, pay, cost){
+/* ---------- profit chart: revenue bar vs stacked payout+cost bar ----------
+   `mkt` is HQ paid-ads for the same months. The bars stay revenue vs payouts+costs
+   (marketing is not an office cost). The tooltip's operation profit matches the
+   P&L: revenue − payouts − costs − marketing. Open months are hatched and do not
+   show a profit computed on costs that have not been closed. */
+function chartProf(el, months, rev, pay, cost, mkt){
   el.innerHTML='';
+  const hasMkt = Array.isArray(mkt);
   const W=1100,H=300,L=52,R=10,T=14,B=30, cw=(W-L-R)/Math.max(months.length,1);
   const mx=niceMax(Math.max(...rev,...months.map((_,i)=>pay[i]+cost[i]),1));
   const s=svgEl(W,H); const y=v=>T+(H-T-B)*(1-v/mx);
   for(let i=0;i<=4;i++){ const v=mx*i/4; line(s,L,y(v),W-R,y(v),'gl'); text(s,L-8,y(v)+4,fmtK(v),'end'); }
   line(s,L,H-B,W-R,H-B,'bl');
   months.forEach((mk,i)=>{
+    const open = typeof isOpenMonth==='function' && isOpenMonth(mk);
     const x0=L+i*cw, bw=Math.min(26,(cw-10)/2), gap=2;
     const xr=x0+cw/2-bw-gap/2, xo=x0+cw/2+gap/2;
-    rect(s,xr,y(rev[i]),bw,H-B-y(rev[i]),css('--in'),4);
+    rect(s,xr,y(rev[i]),bw,H-B-y(rev[i]),fillFor(s,css('--in'),open),4);
     // stacked: payout at bottom, cost on top with 2px gap
     const yPay=y(pay[i]);
-    rect(s,xo,yPay,bw,H-B-yPay,css('--out'),0);
+    rect(s,xo,yPay,bw,H-B-yPay,fillFor(s,css('--out'),open),0);
     const hCost=(H-T-B)*cost[i]/mx;
-    if(hCost>2) rect(s,xo,yPay-2-hCost,bw,hCost,css('--s3'),4);
-    text(s,x0+cw/2,H-B+16,monLbl(mk),'middle');
+    if(hCost>2) rect(s,xo,yPay-2-hCost,bw,hCost,fillFor(s,css('--s3'),open),4);
+    markMonthLabel(text(s,x0+cw/2,H-B+16,monLbl(mk),'middle'), mk);
     const hv=document.createElementNS(s.namespaceURI,'rect');
     hv.setAttribute('x',x0);hv.setAttribute('y',T);hv.setAttribute('width',cw);hv.setAttribute('height',H-T-B);
-    hv.setAttribute('fill','transparent');
-    const p=rev[i]-pay[i]-cost[i];
+    hv.setAttribute('fill','transparent'); hv.dataset.mk = mk;
+    const mkv = hasMkt ? (mkt[i]||0) : 0;
+    const p = rev[i]-pay[i]-cost[i]-mkv;
+    const head = `<b>${monLbl(mk)}</b>`+(open?' · '+mtdLabel(mk):'');
+    const mktLine = hasMkt ? `<br>Marketing: <b>${mkv?fmt$(-mkv):'—'}</b>` : '';
+    const profitLine = open
+      ? `<br>Operation profit: <b>— (not closed)</b>`
+      : `<br>Operation profit: <b>${fmt$(p)}</b>`;
+    const costLine = open ? '<br>Costs: <b>— (not closed)</b>' : `<br>Costs: <b>${fmt$(-cost[i])}</b>`;
     hv.addEventListener('mousemove',e=>showTip(
-      `<b>${monLbl(mk)}</b><br>Revenue: <b>${fmt$(rev[i])}</b><br>Payouts: <b>${fmt$(-pay[i])}</b><br>Costs: <b>${fmt$(-cost[i])}</b><br>Profit: <b>${fmt$(p)}</b>`,e.clientX,e.clientY));
+      `${head}<br>Revenue: <b>${fmt$(rev[i])}</b><br>Payouts: <b>${fmt$(-pay[i])}</b>${costLine}${mktLine}${profitLine}`,
+      e.clientX,e.clientY));
     hv.addEventListener('mouseleave',hideTip); s.appendChild(hv);
   });
   el.appendChild(s);
@@ -165,14 +207,15 @@ function chartPaySplit(el, months, a, b){
   line(s,L,H-B,W-R,H-B,'bl');
   months.forEach((mk,i)=>{
     const x0=L+i*cw, bw=Math.min(14,(cw-6)/2), gap=2;
-    rect(s,x0+cw/2-bw-gap/2,y(a[i]),bw,H-B-y(a[i]),css('--out'),3);
-    rect(s,x0+cw/2+gap/2,y(b[i]),bw,H-B-y(b[i]),css('--s3'),3);
-    if(months.length<=13 && i%2===0) text(s,x0+cw/2,H-B+14,monLbl(mk),'middle');
+    const open = typeof isOpenMonth==='function' && isOpenMonth(mk);
+    rect(s,x0+cw/2-bw-gap/2,y(a[i]),bw,H-B-y(a[i]),fillFor(s,css('--out'),open),3);
+    rect(s,x0+cw/2+gap/2,y(b[i]),bw,H-B-y(b[i]),fillFor(s,css('--s3'),open),3);
+    if(months.length<=13 && i%2===0) markMonthLabel(text(s,x0+cw/2,H-B+14,monLbl(mk),'middle'), mk);
     const hv=document.createElementNS(s.namespaceURI,'rect');
     hv.setAttribute('x',x0);hv.setAttribute('y',T);hv.setAttribute('width',cw);hv.setAttribute('height',H-T-B);
-    hv.setAttribute('fill','transparent');
+    hv.setAttribute('fill','transparent'); hv.dataset.mk = mk;
     hv.addEventListener('mousemove',e=>showTip(
-      `<b>${monLbl(mk)}</b><br>Trader: <b>${fmt$(a[i])}</b><br>Partner (IP): <b>${fmt$(b[i])}</b>`,e.clientX,e.clientY));
+      `<b>${monLbl(mk)}</b>${open?' · '+mtdLabel(mk):''}<br>Trader: <b>${fmt$(a[i])}</b><br>Partner (IP): <b>${fmt$(b[i])}</b>`,e.clientX,e.clientY));
     hv.addEventListener('mouseleave',hideTip); s.appendChild(hv);
   });
   el.appendChild(s);

@@ -38,7 +38,10 @@ function renderExpenses(){
   const ms=msAll;
   document.getElementById('kInSub').textContent='income + funding received';
   document.getElementById('kOutSub').textContent='expenses (internal transfers excluded)';
-  document.getElementById('kNetSub').textContent= !ms.length ? 'no data in range'
+  const rangeMs=monthsInRange();
+  const openRange=rangeMs.length && rangeMs.every(isOpenMonth) && !ms.length;
+  document.getElementById('kNetSub').textContent= openRange ? 'not closed · '+rangeMs.map(mtdLabel).join(', ')
+    : !ms.length ? 'no data in range'
     : ms.length===1 ? monLbl(ms[0])
     : `${monLbl(ms[0])} – ${monLbl(ms[ms.length-1])}`;
   document.getElementById('kNSub').textContent='in selected period';
