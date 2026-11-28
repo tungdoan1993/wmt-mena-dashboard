@@ -6,8 +6,8 @@
 <meta name="robots" content="noindex,nofollow">
 <title>WeMasterTrade · Expenses — MENA Dashboard</title>
 <link rel="preload" href="assets/fonts/figtree-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="assets/css/dashboard.css?v=2026-11-28-isolate">
-<script src="assets/js/loader.js?v=2026-11-28-isolate" defer></script>
+<link rel="stylesheet" href="assets/css/dashboard.css?v=2026-11-28-wg-iran">
+<script src="assets/js/loader.js?v=2026-11-28-wg-iran" defer></script>
 
 </head>
 <body>
@@ -37,7 +37,8 @@
     <div class="filters">
       <button class="chip on" data-office="Dubai"><span class="dot" style="background:var(--o-dubai)"></span>Dubai</button>
       <button class="chip on" data-office="WMT Alexandria"><span class="dot" style="background:var(--o-alex)"></span>Alexandria</button>
-      <button class="chip on" data-office="WeGolden Egypt"><span class="dot" style="background:var(--o-wg)"></span>WeGolden Egypt</button>
+      <button class="chip" data-office="WeGolden Egypt"><span class="dot" style="background:var(--o-wg)"></span><span class="full">WeGolden Egypt</span><span class="short">WG Egypt</span></button>
+      <button class="chip" data-office="WeGolden Iran"><span class="dot" style="background:var(--o-wg-ir)"></span><span class="full">WeGolden Iran</span><span class="short">WG Iran</span></button>
       <select id="range" aria-label="Period">
         <option value="all">All time</option>
         <option value="ytd">2026 YTD</option>
@@ -73,7 +74,7 @@
     </div>
     <div class="card">
       <h2>By office</h2>
-      <div class="note">Money out per office</div>
+      <div class="note" id="offNote">Money out per office</div>
       <div id="chOffice"></div>
     </div>
   </div>
@@ -197,12 +198,12 @@
 </div>
 
 <footer>
-  <div><b>Products.</b> WeMasterTrade figures cover the Dubai + Alexandria offices and WMT MENA revenue and payouts only — WeGolden money is fully excluded. WeGolden has its own expenses and operation profit, and no revenue yet (build phase).</div>
+  <div><b>Products.</b> WeMasterTrade figures cover the Dubai + Alexandria offices and WMT revenue and payouts only — WeGolden money is fully excluded. WeGolden is two cost centres, Egypt and Iran, with its own expenses and operation profit, and no revenue yet (build phase). Iran sales salaries paid in USDT sit on WeGolden Iran, not on Dubai.</div>
   <div><b>Revenue sources.</b> HubSpot “Total MENA Revenue” (unsummarized export, closed-won WMT deals by create date) for 14 MENA countries, plus the internal CRM deal export (crm.wemastertrade.com, cut 11-Aug-2026) as the authority for <b>Syria and Iran</b> — 16 MENA countries in total. Incomplete Checkout deals are excluded; HubSpot Syria rows were replaced by the CRM figures.</div>
   <div><b>Payout sources.</b> HubSpot “MENA Trader Payout” and “MENA IP Payout” (approval amount to withdraw, by ticket create date). Operation profit = revenue − payouts − costs − marketing. $9,166 of payouts dated before Aug 2025 fall outside the period and are excluded; one Aug ’25 Iraq trader ticket has no amount and is skipped.</div>
   <div><b>Marketing.</b> Facebook and Google paid-ads spend attributed to MENA, from the internal Paid Ads report. It is <b>paid centrally by HQ</b>, so it never passes through the Dubai or Alexandria accounts — it is deliberately absent from the expense tabs and from the bank reconciliation, and appears only as its own line here. Tracked from March 2026, figures in USD as reported at source (the Google account bills in CAD and the report converts it; no further conversion is applied here). Facebook / Google by month: Mar $6,471 / $15,866 · Apr $8,659 / $16,635 · May $12,929 / $15,751 · Jun $14,920 / $11,419 · Jul $21,450 / $18,673. Paused campaigns are included. Months before March show “—”. MENA attribution in the source report is campaign-name based and flagged there as partial coverage, so the figure is more likely to understate than overstate.</div>
   <div><b>FX.</b> 1 USD = 3.6725 AED (peg) · Egypt rows up to Feb 2026: Alexandria EGP at 52.93, WeGolden EGP at 45.11 per report. From Mar 2026 every Egypt row is booked in USD at the actual rate of the transfer that funded it (EGP amount and rate in the notes).</div>
-  <div><b>Markets.</b> Revenue, customer payouts and paid-ads are split by the deal's country: Pakistan, Ethiopia and Nigeria each own their country; MENA is every other country. Office costs count toward MENA only (Dubai + Alexandria) until an office is assigned to another market. Expenses are shown per office, not per market.</div>
+  <div><b>Markets.</b> Revenue, customer payouts and paid-ads are split by the deal's country: Pakistan, Ethiopia and Nigeria each own their country; MENA is every other country. Office costs count toward MENA only (Dubai + Alexandria). WeGolden Egypt and WeGolden Iran count only on the WeGolden product. Adding every market's profit to WeGolden profit is the group total: moving a cost from Dubai to WeGolden Iran changes neither that group cost nor that group profit. Expenses are shown per office, not per market.</div>
   <div><b>Method.</b> Money in = income + funding transfers received; money out = expenses. Internal transfers between own accounts are excluded from totals and charts (still visible in the source files). WeGolden setup costs (undated) sit in Feb 2026.</div>
   <div><b>Source files.</b> Listed with links in the Audit trail panel above.</div>
 </footer>

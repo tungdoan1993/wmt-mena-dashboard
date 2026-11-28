@@ -30,8 +30,11 @@ function usd(t){
       return t.amt/RATES.AED;
     }
     if(t.cur==='EGP'){
-      const rate = t.office==='WMT Alexandria' ? RATES.EGP_ALEX : RATES.EGP_WG;
-      if(typeof rate!=='number' || !rate){ console.warn('EGP rate missing'); return 0; }
+      /* Iran rows are USDT/USD. Never apply an Egypt pound rate to that office. */
+      if(t.office==='WeGolden Iran'){ console.warn('EGP rate does not apply to WeGolden Iran'); return t.amt; }
+      const rate = t.office==='WMT Alexandria' ? RATES.EGP_ALEX
+        : t.office==='WeGolden Egypt' ? RATES.EGP_WG : null;
+      if(typeof rate!=='number' || !rate){ console.warn('EGP rate missing', t.office); return 0; }
       return t.amt/rate;
     }
     return t.amt;
@@ -49,7 +52,7 @@ const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).
 const NOEL = document.createElement('div');
 const el = id => document.getElementById(id) || NOEL;
 const spanLbl = ms => !ms.length ? 'no data in range' : ms.length===1 ? monLbl(ms[0]) : `${monLbl(ms[0])} – ${monLbl(ms[ms.length-1])}`;
-const OFF_COLOR = {'Dubai':'--o-dubai','WMT Alexandria':'--o-alex','WeGolden Egypt':'--o-wg'};
+const OFF_COLOR = {'Dubai':'--o-dubai','WMT Alexandria':'--o-alex','WeGolden Egypt':'--o-wg','WeGolden Iran':'--o-wg-ir'};
 /* Paid-ads spend attributed to MENA, PAID CENTRALLY BY HQ — not a Dubai/Alexandria office
    cost and deliberately absent from the expense tabs and the bank reconciliation.
    Source: report.wemastertrade.com/dashboard/paid-ads (region MENA). WMT only.
@@ -58,10 +61,23 @@ const MKT = MENA.MKT || {};
 const MKTC_M = MENA.MKTC_M || {};  /* paid-ads spend by month x country, USD (FB USD + Google CAD converted) */
 const MKTC = Object.entries(MKTC_M).flatMap(([mk,o])=>Object.entries(o).map(([c,amt])=>({mk,c,amt})));
 const MKT_FROM = MENA.MKT_FROM;
-const OFF_SHORT = {'Dubai':'Dubai','WMT Alexandria':'Alexandria','WeGolden Egypt':'WeGolden'};
+const OFF_SHORT = {'Dubai':'Dubai','WMT Alexandria':'Alexandria','WeGolden Egypt':'WG Egypt','WeGolden Iran':'WG Iran'};
+function offLabel(o){ return OFF_SHORT[o] || o || 'Other/unmapped'; }
+function offColor(o){ return OFF_COLOR[o] || '--o-other'; }
 
 /* ---------- state & filtering ---------- */
-const PRODUCT_OFFICES = { wmt:['Dubai','WMT Alexandria'], wg:['WeGolden Egypt'] };
+const PRODUCT_OFFICES = { wmt:['Dubai','WMT Alexandria'], wg:['WeGolden Egypt','WeGolden Iran'] };
+const KNOWN_OFFICES = PRODUCT_OFFICES.wmt.concat(PRODUCT_OFFICES.wg);
+function officeKnown(o){ return KNOWN_OFFICES.indexOf(o)>=0; }
+/* Positive USD spend (expenses only, internal transfers excluded) for one office. */
+function officeSpend(office, months){
+  const ms=new Set(months);
+  return -DATA.filter(t=>ms.has(t.mk)&&t.office===office&&t.amt<0&&!isInternal(t)).reduce((a,t)=>a+usd(t),0);
+}
+function unmappedRows(){
+  const ms=new Set(monthsInRange());
+  return DATA.filter(t=>t.office&&!officeKnown(t.office)&&ms.has(t.mk));
+}
 const state = { product:'wmt', offices:new Set(PRODUCT_OFFICES.wmt), range:'all', q:'', rows:50, tab:'exp', market:CATCH_ALL };
 /* ---------- per-product URLs ----------
    Root, /wmt/ and /wg/ all serve the same page. The page reads the product from
@@ -255,6 +271,25 @@ function placeNoticeBefore(elId, html){
   const n=document.createElement('div');
   n.className='src-miss-slot'; n.innerHTML=html;
   node.parentNode.insertBefore(n, node);
+}
+function showUnmapped(hostId){
+  const host=document.getElementById(hostId);
+  if(!host) return;
+  const rows=unmappedRows().filter(t=>!isInternal(t)&&t.amt<0);
+  let n=host.querySelector(':scope > .unmap-slot');
+  if(!rows.length){ if(n) n.remove(); return; }
+  const by={};
+  rows.forEach(t=>{ by[t.office]=(by[t.office]||0)-usd(t); });
+  const bits=Object.entries(by).map(([o,v])=>escHtml(o)+' '+fmt$(-v)).join(' · ');
+  const html='<div class="src-miss" role="status" data-unmapped="1" style="margin:12px 0;padding:12px 16px;border-radius:16px;background:#fff2eb;color:#8c491a;font-size:13.5px;line-height:1.45"><b>Other/unmapped</b> — '+bits+' · not in WeMasterTrade or WeGolden, shown so the rows are not dropped</div>';
+  if(!n){
+    n=document.createElement('div');
+    n.className='unmap-slot';
+    const miss=host.querySelector(':scope > .src-miss-slot');
+    if(miss) miss.insertAdjacentElement('afterend', n);
+    else host.insertBefore(n, host.firstChild);
+  }
+  if(n.innerHTML!==html) n.innerHTML=html;
 }
 function flagTotal(id, files){
   const node=document.getElementById(id);

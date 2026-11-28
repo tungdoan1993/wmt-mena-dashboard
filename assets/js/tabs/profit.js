@@ -60,11 +60,19 @@ function renderProfit(){
     `It fills in automatically once ${M.label} rows are added to the data files.`;
   if(blocked) return;
   placeNotice('profBody', problemFiles.length ? missHtml(problemFiles) : '');
+  showUnmapped('profBody');
   el('pNetLbl').textContent = wg ? 'Operation profit' : `Operation profit · ${M.label}`;
   document.getElementById('pRevSub').textContent = wg?'WeGolden — no revenue yet (build phase)'
     : catchAll ? 'WMT MENA (HubSpot report)' : `WMT ${M.label}`;
-  document.getElementById('pCostSub').textContent = wg?'WeGolden Egypt office expenses'
-    : offList.length ? offList.map(o=>OFF_SHORT[o]).join(' + ')+' office expenses' : `no office assigned to ${M.label} yet`;
+  if(wg){
+    const eg=officeSpend('WeGolden Egypt', ms), ir=officeSpend('WeGolden Iran', ms);
+    document.getElementById('pCostSub').textContent =
+      `WeGolden office expenses (Egypt + Iran) · WG Egypt ${fmt$(-eg)} · WG Iran ${fmt$(-ir)}`;
+  } else {
+    document.getElementById('pCostSub').textContent = offList.length
+      ? offList.map(o=>offLabel(o)).join(' + ')+' office expenses'
+      : `no office assigned to ${M.label} yet`;
+  }
   document.getElementById('pPayCard').style.display = wg?'none':'';
   document.getElementById('cardPayCountry').style.display = wg?'none':'';
   document.getElementById('cardPaySplit').style.display = wg?'none':'';

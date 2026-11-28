@@ -25,7 +25,7 @@ document.querySelectorAll('.chip[data-office]').forEach(ch=>{
 });
 document.getElementById('range').addEventListener('change',e=>{state.range=e.target.value;state.rows=50;syncURL();render();});
 function applyRange(r){ state.range=r; state.rows=50; const sel=document.getElementById('range'); if(sel.value!==r) sel.value=r; }
-document.getElementById('q').addEventListener('input',e=>{state.q=e.target.value;state.rows=50;renderTable(filtered());});
+document.getElementById('q').addEventListener('input',e=>{state.q=e.target.value;state.rows=50;renderTable(filtered().concat(unmappedRows()));});
 
 /* boot: honour /wmt/ or /wg/ plus the #tab, #market and period in the URL */
 { const hp = hashParts(); state.tab = hp.tab || 'exp'; if(hp.market) state.market = hp.market; if(hp.range) applyRange(hp.range); }

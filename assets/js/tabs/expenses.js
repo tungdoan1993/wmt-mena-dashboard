@@ -4,22 +4,26 @@
 /* ---------- table ---------- */
 function renderTable(rows){
   const q=state.q.toLowerCase();
-  const match=rows.filter(t=>!q||[t.desc,t.cat,t.notes,t.office,t.type].join(' ').toLowerCase().includes(q))
-    .sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const hit=t=>!q||[t.desc,t.cat,t.notes,t.office,t.type].join(' ').toLowerCase().includes(q);
+  const byDate=(a,b)=>(b.date||'').localeCompare(a.date||'');
+  const stray=rows.filter(t=>!officeKnown(t.office)&&hit(t)).sort(byDate);
+  const match=rows.filter(t=>officeKnown(t.office)&&hit(t)).sort(byDate);
   const gaps = (typeof expenseGapsInRange==='function' && MENA.manifestOk!==false) ? expenseGapsInRange() : [];
-  document.getElementById('tblCount').textContent=`${match.length.toLocaleString()} transactions`+(gaps.length?' · incomplete':'');
+  document.getElementById('tblCount').textContent=`${match.length.toLocaleString()} transactions`+(stray.length?` · ${stray.length} unmapped`:'')+(gaps.length?' · incomplete':'');
   const tb=document.getElementById('tbody'); tb.innerHTML='';
-  match.slice(0,state.rows).forEach(t=>{
+  function addRow(t){
     const tr=document.createElement('tr');
     const u=usd(t);
     tr.innerHTML=`<td>${t.date||t.mk}</td>
-      <td><span class="pill">${OFF_SHORT[t.office]}</span></td>
+      <td><span class="pill">${offLabel(t.office)}</span>${officeKnown(t.office)?'':' <span class="pill">unmapped</span>'}</td>
       <td>${t.cat}${isInternal(t)?' <span class="pill">internal</span>':''}</td>
       <td>${t.desc||''}${t.notes?` <span style="color:var(--muted)">· ${t.notes}</span>`:''}</td>
       <td class="num ${t.amt>0?'pos':'neg'}">${fmtNat(t)}</td>
       <td class="num ${t.amt>0?'pos':'neg'}">${fmt$(u)}</td>`;
     tb.appendChild(tr);
-  });
+  }
+  stray.forEach(addRow);
+  match.slice(0,state.rows).forEach(addRow);
   document.getElementById('moreBtn').style.display = match.length>state.rows?'':'none';
 }
 function showMore(){ state.rows+=100; render(); }
@@ -89,10 +93,24 @@ function renderExpenses(){
   hbars(document.getElementById('chCat'),cats,()=>css('--in'),
     d=>`<b>${d.label}</b><br>Spend: <b>${fmt$(-d.v)}</b>`);
 
-  const offs=[...state.offices].map(o=>({label:OFF_SHORT[o],office:o,
-    v:-flow.filter(t=>t.office===o&&t.amt<0).reduce((a,t)=>a+usd(t),0)})).sort((a,b)=>b.v-a.v);
-  hbars(document.getElementById('chOffice'),offs,d=>css(OFF_COLOR[d.office]),
+  const offs=[...state.offices].map(o=>({label:offLabel(o),office:o,
+    v:-flow.filter(t=>t.office===o&&t.amt<0).reduce((a,t)=>a+usd(t),0)}));
+  const stray=unmappedRows().filter(t=>!isInternal(t)&&t.amt<0);
+  if(stray.length){
+    const v=-stray.reduce((a,t)=>a+usd(t),0);
+    offs.push({label:'Other/unmapped',office:'__other',v});
+  }
+  offs.sort((a,b)=>b.v-a.v);
+  hbars(document.getElementById('chOffice'),offs,d=>css(offColor(d.office)),
     d=>`<b>${d.label}</b><br>Spend: <b>${fmt$(-d.v)}</b>`);
+  const note=document.getElementById('offNote');
+  if(note){
+    if(state.product==='wg'){
+      const ms=monthsInRange();
+      note.textContent=`WG Egypt ${fmt$(-officeSpend('WeGolden Egypt',ms))} · WG Iran ${fmt$(-officeSpend('WeGolden Iran',ms))}`;
+    } else note.textContent='Money out per office';
+  }
+  showUnmapped('view-exp');
 
-  renderTable(rows);
+  renderTable(rows.concat(unmappedRows()));
 }

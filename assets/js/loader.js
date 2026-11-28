@@ -7,7 +7,7 @@
    Last-good: data/snapshots/last.json if a publisher has written one, otherwise this
    browser's last successful copy. Nothing is invented when neither exists. */
 (function () {
-  var CODE = '2026-11-28-isolate';   /* bump on every code/CSS change so browsers refetch; keep in step with index.html */
+  var CODE = '2026-11-28-wg-iran';   /* bump on every code/CSS change so browsers refetch; keep in step with index.html */
   var APP = ['assets/js/core.js', 'assets/js/charts.js', 'assets/js/tabs/expenses.js',
              'assets/js/tabs/revenue.js', 'assets/js/tabs/profit.js', 'assets/js/main.js'];
   var SNAP_PREFIX = 'wmt-dash-lastgood:v1:';
