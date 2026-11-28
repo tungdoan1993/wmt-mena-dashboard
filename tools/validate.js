@@ -19,7 +19,8 @@ for (const { f, rows } of cur.exp) {
   rows.forEach((r, i) => {
     if (r.mk !== mk) errs.push(`${f} row ${i}: mk ${r.mk} ≠ file month`);
     for (const k of ['office', 'type', 'cat', 'amt', 'cur']) if (r[k] === undefined) errs.push(`${f} row ${i}: missing ${k}`);
-    if (!['Dubai', 'WMT Alexandria', 'WeGolden Egypt'].includes(r.office)) errs.push(`${f} row ${i}: unknown office ${r.office}`);
+    if (!['Dubai', 'WMT Alexandria', 'WeGolden Egypt', 'WeGolden Iran'].includes(r.office))
+      errs.push(`${f} row ${i}: unknown office "${r.office}" — not Dubai, WMT Alexandria, WeGolden Egypt, or WeGolden Iran`);
   });
 }
 const hub = cur.rev['revenue/hubspot.json'] || [], crm = cur.rev['revenue/crm-syria-iran.json'] || [];

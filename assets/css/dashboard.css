@@ -27,7 +27,7 @@
   --page:#f5ead8; --surface:#ebddc5; --ink:#201e1d; --ink2:#645c50; --muted:#82796a;
   --grid:#dcd3c4; --axis:#c0b6a5; --ring:rgba(32,30,29,.16);
   --in:#728157; --out:#c67139; --s3:#82796a;
-  --o-dubai:#c67139; --o-alex:#728157; --o-wg:#82796a;
+  --o-dubai:#c67139; --o-alex:#728157; --o-wg:#82796a; --o-wg-ir:#3d6e8c; --o-other:#8c4a62;
   --good:#56633f; --bad:#8c491a;
 }
 *,*::before,*::after{box-sizing:border-box}
@@ -89,6 +89,7 @@ h1{font-size:38px;margin:4px 0 0}
 .chip.on{background:var(--color-bg);color:var(--color-text);box-shadow:var(--shadow-sm)}
 .chip .dot{width:9px;height:9px;border-radius:50%;display:block;opacity:.4}
 .chip.on .dot{opacity:1}
+.chip .short{display:none}
 select,input[type=search]{font:inherit;font-size:13px;color:var(--color-text);
   background:var(--color-neutral-100);border:1px solid var(--color-divider);border-radius:999px;
   padding:6px 14px;min-height:34px;caret-color:var(--color-accent)}
@@ -175,4 +176,6 @@ footer b{color:var(--color-accent-800)}
 @media(max-width:520px){
   .mkt .full{display:none}
   .mkt .short{display:inline}
+  .chip .full{display:none}
+  .chip .short{display:inline}
 }
