@@ -1,17 +1,18 @@
 /* Core: data bindings, helpers, state, routing, filtering, tooltip.
    Part of the MENA dashboard. Loaded in order by assets/js/loader.js. */
 
-const DATA = MENA.DATA;
-const REV = MENA.REV;
-const PAY = MENA.PAY;
-const RATES = MENA.RATES;
+const DATA = Array.isArray(MENA.DATA) ? MENA.DATA : [];
+const REV = Array.isArray(MENA.REV) ? MENA.REV : [];
+const PAY = Array.isArray(MENA.PAY) ? MENA.PAY : [];
+const RATES = MENA.RATES || {};
 
 /* ---------- markets ----------
    Configured in data/manifest.json -> markets. Each market owns a list of countries; the one
    market with countries "*" (MENA) takes every country no other market claims. Revenue, payouts
    and marketing are split by market on the row's country. Office costs count toward a market only
    if the office is listed in that market's "offices". */
-const MARKETS = MENA.MARKETS;
+const MARKETS = (Array.isArray(MENA.MARKETS) && MENA.MARKETS.length) ? MENA.MARKETS
+  : [{ id:'mena', label:'MENA', slug:'mena', countries:'*', offices:['Dubai','WMT Alexandria'] }];
 const MARKET_BY_ID = Object.fromEntries(MARKETS.map(m=>[m.id,m]));
 const MARKET_BY_SLUG = Object.fromEntries(MARKETS.map(m=>[m.slug,m.id]));
 const CATCH_ALL = (MARKETS.find(m=>m.countries==='*')||MARKETS[0]).id;
@@ -22,9 +23,19 @@ const inMarket = r => marketOf(r.c)===state.market;
 
 /* ---------- helpers ---------- */
 function usd(t){
-  if(t.cur==='AED') return t.amt/RATES.AED;
-  if(t.cur==='EGP') return t.amt/(t.office==='WMT Alexandria'?RATES.EGP_ALEX:RATES.EGP_WG);
-  return t.amt;
+  try {
+    if(!t || typeof t.amt!=='number' || !isFinite(t.amt)){ console.warn('skipping expense row with no amount'); return 0; }
+    if(t.cur==='AED'){
+      if(typeof RATES.AED!=='number' || !RATES.AED){ console.warn('AED rate missing'); return 0; }
+      return t.amt/RATES.AED;
+    }
+    if(t.cur==='EGP'){
+      const rate = t.office==='WMT Alexandria' ? RATES.EGP_ALEX : RATES.EGP_WG;
+      if(typeof rate!=='number' || !rate){ console.warn('EGP rate missing'); return 0; }
+      return t.amt/rate;
+    }
+    return t.amt;
+  } catch (e) { console.warn('usd', e); return 0; }
 }
 const fmt$ = v => (v<0?'−$':'$')+Math.abs(v).toLocaleString('en-US',{maximumFractionDigits:0});
 const fmtK = v => { const a=Math.abs(v);
@@ -43,8 +54,8 @@ const OFF_COLOR = {'Dubai':'--o-dubai','WMT Alexandria':'--o-alex','WeGolden Egy
    cost and deliberately absent from the expense tabs and the bank reconciliation.
    Source: report.wemastertrade.com/dashboard/paid-ads (region MENA). WMT only.
    Only months present here are deducted; months with no entry show "—". */
-const MKT = MENA.MKT;
-const MKTC_M = MENA.MKTC_M;  /* paid-ads spend by month x country, USD (FB USD + Google CAD converted) */
+const MKT = MENA.MKT || {};
+const MKTC_M = MENA.MKTC_M || {};  /* paid-ads spend by month x country, USD (FB USD + Google CAD converted) */
 const MKTC = Object.entries(MKTC_M).flatMap(([mk,o])=>Object.entries(o).map(([c,amt])=>({mk,c,amt})));
 const MKT_FROM = MENA.MKT_FROM;
 const OFF_SHORT = {'Dubai':'Dubai','WMT Alexandria':'Alexandria','WeGolden Egypt':'WeGolden'};
@@ -61,7 +72,7 @@ const PRODUCT_TITLE = { wmt:'WeMasterTrade', wg:'WeGolden' };
 const TAB_SLUG  = { exp:'expenses', prof:'operation-profit' };      /* the revenue tab's slug is the market slug */
 const SLUG_TAB  = { expenses:'exp', revenue:'rev', 'operation-profit':'prof' };   /* "revenue" = old links -> catch-all market */
 const TAB_TITLE = { exp:'Expenses', rev:'Revenue', prof:'Operation Profit' };
-const mktLabel = () => MARKET_BY_ID[state.market].label;
+const mktLabel = () => (MARKET_BY_ID[state.market] || MARKETS[0]).label;
 function productFromPath(){
   const seg = location.pathname.replace(/\/+$/,'').split('/').pop().toLowerCase();
   return (seg==='wg'||seg==='wmt') ? seg : null;
@@ -126,7 +137,10 @@ function setProduct(p){
   if(p==='wg'&&state.tab==='rev') state.tab='exp';
   setTab(state.tab);
 }
-const ALL_MONTHS = [...new Set([...DATA.map(t=>t.mk), ...REV.map(r=>r.mk)])].sort();
+/* Declared expense months stay on the axis even when that month's file failed to load,
+   so a gap is marked instead of the range silently sliding onto the months that did load. */
+const DECLARED_MONTHS = (MENA.expenseMonths || []).map(e=>e && e.mk).filter(Boolean);
+const ALL_MONTHS = [...new Set([...DATA.map(t=>t.mk), ...REV.map(r=>r.mk), ...DECLARED_MONTHS])].sort();
 function setTab(t){
   state.tab=t;
   document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));
@@ -190,4 +204,112 @@ function showTip(html,x,y){ tip.innerHTML=html; tip.style.display='block';
   const w=tip.offsetWidth,h=tip.offsetHeight;
   tip.style.left=Math.min(x+14,innerWidth-w-8)+'px';
   tip.style.top=Math.max(8,Math.min(y-h-10,innerHeight-h-8))+'px'; }
-function hideTip(){ tip.style.display='none'; }
+function hideTip(){ if(tip) tip.style.display='none'; }
+
+/* ---------- fault isolation ----------
+   MENA.STATUS[file] = {file, ok, error, restored}. A restored file still counts as not live:
+   its figures are last-confirmed and every total that includes them is marked incomplete. */
+function escHtml(s){
+  return String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+function fileStatus(file){ return (MENA.STATUS && MENA.STATUS[file]) || null; }
+function fileDown(file){ const s=fileStatus(file); return !!(s && !s.ok); }
+function fileHardDown(file){ const s=fileStatus(file); return !!(s && !s.ok && !s.restored); }
+function missLabel(file){ return 'Chưa cập nhật — '+file+' lỗi'; }
+function gapNote(files){
+  const list=[].concat(files||[]).filter(Boolean);
+  if(!list.length) return '';
+  return 'incomplete · '+list.map(missLabel).join(' · ')+' · Not updated';
+}
+function missHtml(files, extra){
+  const list=[].concat(files||[]).filter(Boolean);
+  if(!list.length && !extra) return '';
+  const style='margin:12px 0;padding:12px 16px;border-radius:16px;background:#fff2eb;color:#8c491a;font-size:13.5px;line-height:1.45';
+  const rows=list.map(f=>{
+    const st=fileStatus(f), stale=st&&st.restored;
+    return '<div data-missing="'+escHtml(f)+'"'+(stale?' data-restored="'+escHtml(st.restored)+'"':'')+'>'+
+      '<b>'+escHtml(missLabel(f))+'</b> <span style="opacity:.85">· Not updated</span>'+
+      (stale?' <span>· last confirmed figures</span>':'')+'</div>';
+  }).join('');
+  const more=extra?'<div>'+escHtml(extra)+'</div>':'';
+  return '<div class="src-miss" role="status" style="'+style+'">'+rows+more+'</div>';
+}
+function placeNotice(hostId, html){
+  const host=document.getElementById(hostId);
+  if(!host) return;
+  let n=host.querySelector(':scope > .src-miss-slot');
+  if(!html){ if(n) n.remove(); return; }
+  if(!n){ n=document.createElement('div'); n.className='src-miss-slot'; host.insertBefore(n, host.firstChild); }
+  if(n.innerHTML!==html) n.innerHTML=html;
+}
+function placeNoticeBefore(elId, html){
+  const node=document.getElementById(elId);
+  if(!node) return;
+  const prev=node.previousElementSibling;
+  if(prev && prev.classList.contains('src-miss-slot')){
+    if(!html) prev.remove();
+    else if(prev.innerHTML!==html) prev.innerHTML=html;
+    return;
+  }
+  if(!html) return;
+  const n=document.createElement('div');
+  n.className='src-miss-slot'; n.innerHTML=html;
+  node.parentNode.insertBefore(n, node);
+}
+function flagTotal(id, files){
+  const node=document.getElementById(id);
+  if(!node) return;
+  if(files && files.length) node.dataset.incomplete=files.join(',');
+  else delete node.dataset.incomplete;
+}
+function expenseGapsInRange(){
+  const list=MENA.expenseMonths||[];
+  const ms=new Set(monthsInRange());
+  const all=state.range==='all';
+  return list.filter(e=>e && e.mk && fileDown(e.file) && (all || ms.has(e.mk)));
+}
+function revenueFilesForMarket(id){
+  const M=MARKET_BY_ID[id]||{};
+  const files=[];
+  if(M.file) files.push(M.file);
+  if(id===CATCH_ALL && files.indexOf('revenue/crm-syria-iran.json')<0) files.push('revenue/crm-syria-iran.json');
+  return files;
+}
+function knownCountries(file){
+  if(file==='revenue/crm-syria-iran.json') return ['Syria','Iran'];
+  const M=MARKETS.find(m=>m.file===file);
+  if(M && Array.isArray(M.countries)) return M.countries.slice();
+  return [];
+}
+function revenueGapsForMarket(id){
+  return revenueFilesForMarket(id).filter(fileDown).map(fileStatus);
+}
+function revenueCountryGaps(id){
+  const out=[];
+  revenueFilesForMarket(id).forEach(f=>{
+    if(!fileHardDown(f)) return;
+    knownCountries(f).forEach(c=>out.push({country:c, file:f}));
+  });
+  return out;
+}
+/* Totals checks warn only. A throw here must not stop the page. */
+function reconcile(){
+  try {
+    if(MENA.marketingOk && MKT && MKTC_M){
+      Object.keys(MKT).forEach(mk=>{
+        const bucket=MKTC_M[mk];
+        if(!bucket || typeof bucket!=='object') return;
+        let sum=0;
+        Object.keys(bucket).forEach(c=>{
+          const v=bucket[c];
+          if(typeof v!=='number') console.warn('marketing byCountry', mk, c, 'not a number');
+          else sum+=v;
+        });
+        const tot=MKT[mk];
+        if(typeof tot==='number' && sum>tot+1) console.warn('marketing byCountry exceeds total', mk, sum, tot);
+        else if(typeof tot!=='number') console.warn('marketing total', mk, 'not a number');
+      });
+    }
+    (MENA.FAILED||[]).forEach(f=>console.warn('data source not updated:', f.file, f.error||'', f.restored?'(showing '+f.restored+')':''));
+  } catch(e) { console.warn('reconciliation skipped', e); }
+}

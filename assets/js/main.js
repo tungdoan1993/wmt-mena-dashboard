@@ -3,9 +3,15 @@
 
 /* ---------- render dispatcher ---------- */
 function render(){
-  if(state.tab==='rev'){ renderRevenue(); return; }
-  if(state.tab==='prof'){ renderProfit(); return; }
-  renderExpenses();
+  try {
+    if(state.tab==='rev'){ renderRevenue(); return; }
+    if(state.tab==='prof'){ renderProfit(); return; }
+    renderExpenses();
+  } catch(e) {
+    console.warn('render failed', e);
+    const id = state.tab==='rev' ? 'view-rev' : state.tab==='prof' ? 'view-prof' : 'view-exp';
+    try { placeNotice(id, missHtml([], String(e && e.message || e))); } catch(e2) { console.warn(e2); }
+  }
 }
 
 /* ---------- events ---------- */
@@ -24,6 +30,7 @@ document.getElementById('q').addEventListener('input',e=>{state.q=e.target.value
 /* boot: honour /wmt/ or /wg/ plus the #tab, #market and period in the URL */
 { const hp = hashParts(); state.tab = hp.tab || 'exp'; if(hp.market) state.market = hp.market; if(hp.range) applyRange(hp.range); }
 setProduct(productFromPath() || 'wmt');
+try { reconcile(); } catch(e) { console.warn('reconciliation skipped', e); }
 window.addEventListener('hashchange',()=>{
   const hp = hashParts();
   let changed=false;

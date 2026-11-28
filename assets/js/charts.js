@@ -20,7 +20,7 @@ function niceMax(v){ const p=Math.pow(10,Math.floor(Math.log10(v||1)));
 function chartMonthly(el, months, inflow, outflow){
   el.innerHTML='';
   const W=1100,H=300,L=52,R=10,T=14,B=30, cw=(W-L-R)/Math.max(months.length,1);
-  const mx=niceMax(Math.max(...inflow,...outflow.map(Math.abs),1));
+  const mx=niceMax(Math.max(...inflow.filter(v=>v!=null), ...outflow.filter(v=>v!=null).map(Math.abs), 1));
   const s=svgEl(W,H); const y=v=>T+(H-T-B)*(1-v/mx);
   for(let i=0;i<=4;i++){ const v=mx*i/4; line(s,L,y(v),W-R,y(v),i?'gl':'gl');
     text(s,L-8,y(v)+4,fmtK(v),'end'); }
@@ -28,6 +28,18 @@ function chartMonthly(el, months, inflow, outflow){
   months.forEach((mk,i)=>{
     const x0=L+i*cw, bw=Math.min(26,(cw-10)/2);
     const gap=2, xin=x0+cw/2-bw-gap/2, xout=x0+cw/2+gap/2;
+    if(inflow[i]==null || outflow[i]==null){
+      text(s,x0+cw/2,(T+H-B)/2,'n/a','middle');
+      text(s,x0+cw/2,H-B+16,monLbl(mk),'middle');
+      const hover=document.createElementNS(s.namespaceURI,'rect');
+      hover.setAttribute('x',x0);hover.setAttribute('y',T);hover.setAttribute('width',cw);
+      hover.setAttribute('height',H-T-B);hover.setAttribute('fill','transparent');
+      const miss=(typeof MENA!=='undefined' && MENA.expenseMonths||[]).find(e=>e.mk===mk);
+      const msg=miss&&typeof missLabel==='function' ? missLabel(miss.file)+' · Not updated' : 'Not updated';
+      hover.addEventListener('mousemove',e=>showTip(`<b>${monLbl(mk)}</b><br>${msg}`,e.clientX,e.clientY));
+      hover.addEventListener('mouseleave',hideTip); s.appendChild(hover);
+      return;
+    }
     const vi=inflow[i], vo=Math.abs(outflow[i]);
     const bi=rect(s,xin,y(vi),bw,H-B-y(vi),css('--in'),4);
     const bo=rect(s,xout,y(vo),bw,H-B-y(vo),css('--out'),4);
@@ -49,6 +61,12 @@ function hbars(el, items, colorFn, labelFn, fmtFn){
   const mx=niceMax(Math.max(...items.map(d=>d.v),1));
   const s=svgEl(W,H);
   items.forEach((d,i)=>{
+    if(d.missing){
+      const yy=4+i*rowH;
+      text(s,L-8,yy+rowH/2+4,d.label.length>20?d.label.slice(0,19)+'…':d.label,'end');
+      text(s,L,yy+rowH/2+4,'Not updated','start','dl');
+      return;
+    }
     const yy=4+i*rowH, bw=(W-L-R)*d.v/mx;
     text(s,L-8,yy+rowH/2+4,d.label.length>20?d.label.slice(0,19)+'…':d.label,'end');
     const b=rect(s,L,yy+5,Math.max(bw,2),rowH-12,colorFn(d,i),0);
@@ -83,22 +101,28 @@ function hbars2(el, items, primary){
       const b=rect(s,L,yy+8+j*15,bw,12,css(tok),0);
       b.setAttribute('rx','4');
     });
+    const leadUnknown = primary==='pay' ? d.payKnown===false : d.revKnown===false;
     const pv=primary==='pay'?d.pay:d.rev;
-    text(s,W-R+8,yy+18,fmtK(pv),'start','dl');
-    const hasPay=d.pay>0, r=d.rev>0&&hasPay?(d.pay/d.rev*100):null;
-    const rt=text(s,W-R+8,yy+32,r===null?'ratio n/a':`${r.toFixed(0)}% out`,'start','dl');
+    text(s,W-R+8,yy+18,leadUnknown?'—':fmtK(pv),'start','dl');
+    const hasPay=d.payKnown!==false && d.pay>0, r=d.revKnown!==false && d.rev>0&&hasPay?(d.pay/d.rev*100):null;
+    const ratioTxt = (d.payKnown===false || d.revKnown===false) ? 'Not updated' : (r===null?'ratio n/a':`${r.toFixed(0)}% out`);
+    const rt=text(s,W-R+8,yy+32,ratioTxt,'start','dl');
     rt.setAttribute('opacity','.72');
     const mk=d.mkt||0;
-    const mt=text(s,W-R+8,yy+46,mk>0?`ads ${fmtK(mk)}`:'no ads','start','dl');
+    const mt=text(s,W-R+8,yy+46,d.mktKnown===false?'Not updated':(mk>0?`ads ${fmtK(mk)}`:'no ads'),'start','dl');
     mt.setAttribute('opacity','.72');
     const hv=document.createElementNS(s.namespaceURI,'rect');
     hv.setAttribute('x',0);hv.setAttribute('y',yy);hv.setAttribute('width',W);hv.setAttribute('height',rowH);
     hv.setAttribute('fill','transparent');
-    hv.addEventListener('mousemove',e=>showTip(
-      `<b>${d.label}</b><br>Revenue: <b>${fmt$(d.rev)}</b><br>Payouts: <b>${fmt$(d.pay)}</b><br>Marketing: <b>${fmt$(mk)}</b>`+
+    const unk = d.payKnown===false || d.mktKnown===false || d.revKnown===false;
+    hv.addEventListener('mousemove',e=>showTip(unk
+      ? (`<b>${d.label}</b><br>Revenue: <b>${d.revKnown===false?'Not updated':fmt$(d.rev)}</b>`+
+         `<br>Payouts: <b>${d.payKnown===false?'Not updated':fmt$(d.pay)}</b>`+
+         `<br>Marketing: <b>${d.mktKnown===false?'Not updated':fmt$(mk)}</b>`)
+      : (`<b>${d.label}</b><br>Revenue: <b>${fmt$(d.rev)}</b><br>Payouts: <b>${fmt$(d.pay)}</b><br>Marketing: <b>${fmt$(mk)}</b>`+
       (r===null?'<br><span style="opacity:.7">no payouts recorded</span>'
                :`<br>Paid out: <b>${r.toFixed(1)}%</b>`)+
-      `<br>After payouts &amp; ads: <b>${fmt$(d.rev-d.pay-mk)}</b>`+(d.rev>0?` (${((d.rev-d.pay-mk)/d.rev*100).toFixed(1)}%)`:''),
+      `<br>After payouts &amp; ads: <b>${fmt$(d.rev-d.pay-mk)}</b>`+(d.rev>0?` (${((d.rev-d.pay-mk)/d.rev*100).toFixed(1)}%)`:'')),
       e.clientX,e.clientY));
     hv.addEventListener('mouseleave',hideTip); s.appendChild(hv);
   });
@@ -109,12 +133,22 @@ function hbars2(el, items, primary){
 function chartBars(el, months, vals, color, tipFn){
   el.innerHTML='';
   const W=1100,H=300,L=52,R=10,T=14,B=30, cw=(W-L-R)/Math.max(months.length,1);
-  const mx=niceMax(Math.max(...vals.map(Math.abs),1));
+  const mx=niceMax(Math.max(...vals.filter(v=>v!=null).map(Math.abs),1));
   const s=svgEl(W,H); const y=v=>T+(H-T-B)*(1-v/mx);
   for(let i=0;i<=4;i++){ const v=mx*i/4; line(s,L,y(v),W-R,y(v),'gl'); text(s,L-8,y(v)+4,fmtK(v),'end'); }
   line(s,L,H-B,W-R,H-B,'bl');
   months.forEach((mk,i)=>{
     const x0=L+i*cw, bw=Math.min(44,cw-14);
+    if(vals[i]==null){
+      text(s,x0+cw/2,(T+H-B)/2,'n/a','middle');
+      text(s,x0+cw/2,H-B+16,monLbl(mk),'middle');
+      const hv=document.createElementNS(s.namespaceURI,'rect');
+      hv.setAttribute('x',x0);hv.setAttribute('y',T);hv.setAttribute('width',cw);hv.setAttribute('height',H-T-B);
+      hv.setAttribute('fill','transparent');
+      hv.addEventListener('mousemove',e=>showTip(`<b>${monLbl(mk)}</b><br>Not updated`,e.clientX,e.clientY));
+      hv.addEventListener('mouseleave',hideTip); s.appendChild(hv);
+      return;
+    }
     const v=Math.abs(vals[i]);
     rect(s,x0+(cw-bw)/2,y(v),bw,H-B-y(v),color,4);
     text(s,x0+cw/2,H-B+16,monLbl(mk),'middle');
@@ -128,29 +162,49 @@ function chartBars(el, months, vals, color, tipFn){
 }
 
 /* ---------- profit chart: revenue bar vs stacked payout+cost bar ---------- */
-function chartProf(el, months, rev, pay, cost){
+function chartProf(el, months, rev, pay, cost, partial){
   el.innerHTML='';
   const W=1100,H=300,L=52,R=10,T=14,B=30, cw=(W-L-R)/Math.max(months.length,1);
-  const mx=niceMax(Math.max(...rev,...months.map((_,i)=>pay[i]+cost[i]),1));
+  const scale=[];
+  months.forEach((_,i)=>{
+    if(rev[i]!=null) scale.push(rev[i]);
+    if(pay[i]!=null || cost[i]!=null) scale.push((pay[i]||0)+(cost[i]||0));
+  });
+  const mx=niceMax(Math.max(...scale,1));
   const s=svgEl(W,H); const y=v=>T+(H-T-B)*(1-v/mx);
   for(let i=0;i<=4;i++){ const v=mx*i/4; line(s,L,y(v),W-R,y(v),'gl'); text(s,L-8,y(v)+4,fmtK(v),'end'); }
   line(s,L,H-B,W-R,H-B,'bl');
   months.forEach((mk,i)=>{
     const x0=L+i*cw, bw=Math.min(26,(cw-10)/2), gap=2;
     const xr=x0+cw/2-bw-gap/2, xo=x0+cw/2+gap/2;
-    rect(s,xr,y(rev[i]),bw,H-B-y(rev[i]),css('--in'),4);
-    // stacked: payout at bottom, cost on top with 2px gap
-    const yPay=y(pay[i]);
-    rect(s,xo,yPay,bw,H-B-yPay,css('--out'),0);
-    const hCost=(H-T-B)*cost[i]/mx;
-    if(hCost>2) rect(s,xo,yPay-2-hCost,bw,hCost,css('--s3'),4);
+    const rv=rev[i], pv=pay[i], cv=cost[i];
+    const whole = rv!=null && pv!=null && cv!=null;
+    if(rv==null && pv==null && cv==null){
+      text(s,x0+cw/2,(T+H-B)/2,'n/a','middle');
+    } else if(whole){
+      rect(s,xr,y(rv),bw,H-B-y(rv),css('--in'),4);
+      // stacked: payout at bottom, cost on top with 2px gap
+      const yPay=y(pv);
+      rect(s,xo,yPay,bw,H-B-yPay,css('--out'),0);
+      const hCost=(H-T-B)*cv/mx;
+      if(hCost>2) rect(s,xo,yPay-2-hCost,bw,hCost,css('--s3'),4);
+    } else {
+      if(rv!=null) rect(s,xr,y(rv),bw,H-B-y(rv),css('--in'),4);
+      if(pv!=null){ const yPay=y(pv); rect(s,xo,yPay,bw,H-B-yPay,css('--out'),0); }
+      if(cv!=null && pv==null){
+        const hCost=(H-T-B)*cv/mx;
+        if(hCost>2) rect(s,xo,y(cv),bw,hCost,css('--s3'),4);
+      }
+    }
     text(s,x0+cw/2,H-B+16,monLbl(mk),'middle');
     const hv=document.createElementNS(s.namespaceURI,'rect');
     hv.setAttribute('x',x0);hv.setAttribute('y',T);hv.setAttribute('width',cw);hv.setAttribute('height',H-T-B);
     hv.setAttribute('fill','transparent');
-    const p=rev[i]-pay[i]-cost[i];
-    hv.addEventListener('mousemove',e=>showTip(
-      `<b>${monLbl(mk)}</b><br>Revenue: <b>${fmt$(rev[i])}</b><br>Payouts: <b>${fmt$(-pay[i])}</b><br>Costs: <b>${fmt$(-cost[i])}</b><br>Profit: <b>${fmt$(p)}</b>`,e.clientX,e.clientY));
+    const profitKnown = whole && !partial;
+    const tipHtml = profitKnown
+      ? `<b>${monLbl(mk)}</b><br>Revenue: <b>${fmt$(rv)}</b><br>Payouts: <b>${fmt$(-pv)}</b><br>Costs: <b>${fmt$(-cv)}</b><br>Profit: <b>${fmt$(rv-pv-cv)}</b>`
+      : `<b>${monLbl(mk)}</b><br>Revenue: <b>${rv==null?'Not updated':fmt$(rv)}</b><br>Payouts: <b>${pv==null?'Not updated':fmt$(-pv)}</b><br>Costs: <b>${cv==null?'Not updated':fmt$(-cv)}</b><br>Profit: <b>Not updated</b>`;
+    hv.addEventListener('mousemove',e=>showTip(tipHtml,e.clientX,e.clientY));
     hv.addEventListener('mouseleave',hideTip); s.appendChild(hv);
   });
   el.appendChild(s);

@@ -6,7 +6,8 @@ function renderTable(rows){
   const q=state.q.toLowerCase();
   const match=rows.filter(t=>!q||[t.desc,t.cat,t.notes,t.office,t.type].join(' ').toLowerCase().includes(q))
     .sort((a,b)=>(b.date||'').localeCompare(a.date||''));
-  document.getElementById('tblCount').textContent=`${match.length.toLocaleString()} transactions`;
+  const gaps = (typeof expenseGapsInRange==='function' && MENA.manifestOk!==false) ? expenseGapsInRange() : [];
+  document.getElementById('tblCount').textContent=`${match.length.toLocaleString()} transactions`+(gaps.length?' · incomplete':'');
   const tb=document.getElementById('tbody'); tb.innerHTML='';
   match.slice(0,state.rows).forEach(t=>{
     const tr=document.createElement('tr');
@@ -25,8 +26,42 @@ function showMore(){ state.rows+=100; render(); }
 
 /* ---------- expenses view ---------- */
 function renderExpenses(){
+  const manifestOk = MENA.manifestOk !== false;
+  const gaps = manifestOk ? expenseGapsInRange() : [];
+  const hard = gaps.filter(e=>fileHardDown(e.file));
+  const files = manifestOk ? gaps.map(e=>e.file) : ['manifest.json'];
+  placeNotice('view-exp', (gaps.length || !manifestOk) ? missHtml(files) : '');
+
+  const blank = () => {
+    ['kIn','kOut','kNet','kN'].forEach(id=>{
+      const n=document.getElementById(id);
+      n.textContent='—';
+      if(id==='kNet') n.style.color='';
+      flagTotal(id, files);
+    });
+    document.getElementById('kInSub').textContent='Not updated';
+    document.getElementById('kOutSub').textContent='Not updated';
+    document.getElementById('kNetSub').textContent=gapNote(files);
+    document.getElementById('kNSub').textContent='Not updated';
+    document.getElementById('chMonthly').innerHTML='';
+    document.getElementById('chCat').innerHTML='';
+    document.getElementById('chOffice').innerHTML='';
+    document.getElementById('tbody').innerHTML='';
+    document.getElementById('tblCount').textContent=missLabel(files[0])+' · Not updated';
+    document.getElementById('moreBtn').style.display='none';
+  };
+  if(!manifestOk){ blank(); return; }
+
   const rows=filtered();
-  const msAll=monthsInRange().filter(mk=>DATA.some(t=>t.mk===mk&&state.offices.has(t.office)));
+  const hardSet=new Set(hard.map(e=>e.mk));
+  const msData=monthsInRange().filter(mk=>DATA.some(t=>t.mk===mk&&state.offices.has(t.office)));
+  const ms=[...new Set([...msData, ...hard.map(e=>e.mk)])].sort();
+  if(!msData.length && hard.length){
+    blank();
+    chartMonthly(document.getElementById('chMonthly'), ms, ms.map(()=>null), ms.map(()=>null));
+    return;
+  }
+
   const flow=rows.filter(t=>!isInternal(t));
   const tin=flow.filter(t=>t.amt>0).reduce((a,t)=>a+usd(t),0);
   const tout=flow.filter(t=>t.amt<0).reduce((a,t)=>a+usd(t),0);
@@ -35,16 +70,17 @@ function renderExpenses(){
   const net=tin+tout, kn=document.getElementById('kNet');
   kn.textContent=fmt$(net); kn.style.color=net>=0?'var(--good)':'var(--bad)';
   document.getElementById('kN').textContent=rows.length.toLocaleString();
-  const ms=msAll;
-  document.getElementById('kInSub').textContent='income + funding received';
-  document.getElementById('kOutSub').textContent='expenses (internal transfers excluded)';
-  document.getElementById('kNetSub').textContent= !ms.length ? 'no data in range'
-    : ms.length===1 ? monLbl(ms[0])
-    : `${monLbl(ms[0])} – ${monLbl(ms[ms.length-1])}`;
-  document.getElementById('kNSub').textContent='in selected period';
+  const inc = gaps.length ? ' · incomplete' : '';
+  document.getElementById('kInSub').textContent='income + funding received'+inc;
+  document.getElementById('kOutSub').textContent='expenses (internal transfers excluded)'+inc;
+  document.getElementById('kNetSub').textContent= (!msData.length ? 'no data in range'
+    : msData.length===1 ? monLbl(msData[0])
+    : `${monLbl(msData[0])} – ${monLbl(msData[msData.length-1])}`) + (gaps.length ? ' · '+gapNote(files) : '');
+  document.getElementById('kNSub').textContent='in selected period'+inc;
+  ['kIn','kOut','kNet','kN'].forEach(id=>flagTotal(id, gaps.length?files:[]));
 
-  const inflow=ms.map(mk=>flow.filter(t=>t.mk===mk&&t.amt>0).reduce((a,t)=>a+usd(t),0));
-  const outflow=ms.map(mk=>flow.filter(t=>t.mk===mk&&t.amt<0).reduce((a,t)=>a+usd(t),0));
+  const inflow=ms.map(mk=>hardSet.has(mk)?null:flow.filter(t=>t.mk===mk&&t.amt>0).reduce((a,t)=>a+usd(t),0));
+  const outflow=ms.map(mk=>hardSet.has(mk)?null:flow.filter(t=>t.mk===mk&&t.amt<0).reduce((a,t)=>a+usd(t),0));
   chartMonthly(document.getElementById('chMonthly'),ms,inflow,outflow);
 
   const byCat={};
